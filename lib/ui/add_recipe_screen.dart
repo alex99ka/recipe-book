@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/errors.dart';
+import '../core/share_in.dart';
 import '../recipes/api.dart';
 import 'pick.dart';
 import 'recipe_screen.dart';
@@ -10,7 +11,10 @@ enum _Mode { link, text, file }
 /// A new recipe from a link (a site or a cooking video), pasted text, or a
 /// photo or PDF of one. Opens the recipe once the server has read it.
 class AddRecipeScreen extends StatefulWidget {
-  const AddRecipeScreen({super.key});
+  const AddRecipeScreen({super.key, this.shared});
+
+  /// Shared from another app: starts filled in with it.
+  final Shared? shared;
 
   @override
   State<AddRecipeScreen> createState() => _AddRecipeScreenState();
@@ -30,6 +34,18 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.shared case final s?) {
+      final url = firstUrl(s.text);
+      if (s.bytes != null) {
+        _mode = _Mode.file;
+        _source = (s.bytes!, s.name ?? 'shared.jpg');
+      } else if (url != null) {
+        _url.text = url;
+      } else {
+        _mode = _Mode.text;
+        _text.text = s.text ?? '';
+      }
+    }
     Api.collections().then((c) {
       if (mounted) setState(() => _collections = c);
     }, onError: (_) {}); // only the "also add to" list; adding works without it

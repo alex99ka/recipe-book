@@ -13,6 +13,7 @@ import 'core/errors.dart';
 import 'core/lock.dart';
 import 'core/remote_config.dart';
 import 'core/settings_store.dart';
+import 'core/share_in.dart';
 import 'core/tour.dart';
 import 'core/update.dart';
 import 'core/web_update.dart';
@@ -51,6 +52,7 @@ Future<void> main() async {
   await SettingsStore.instance.load();
   await Api.loadBook();
   listenForInvites();
+  listenForShares();
 
   // A throw before runApp is an invisible process on Windows (no window at
   // all), so startup failures become a screen with a code instead.

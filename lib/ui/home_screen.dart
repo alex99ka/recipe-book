@@ -6,6 +6,7 @@ import '../config.dart';
 import '../core/app_info.dart';
 import '../core/errors.dart';
 import '../core/remote_config.dart';
+import '../core/share_in.dart';
 import '../core/tour.dart';
 import '../core/update.dart';
 import '../core/web_update.dart';
@@ -61,6 +62,8 @@ class _HomeScreenState extends State<HomeScreen> {
       RemoteConfig.instance.checkAccess(null).ignore(); // the inbox badge
     });
     _load().then((_) => _afterFirstLoad());
+    shareArrived.addListener(_openShared);
+    _openShared(); // the share that started the app
   }
 
   void _checkUpdates() {
@@ -83,8 +86,18 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Something shared from another app: a new recipe from it.
+  Future<void> _openShared() async {
+    final s = await takeShared();
+    if (s == null || !mounted) return;
+    await Navigator.push(
+        context, MaterialPageRoute<void>(builder: (_) => AddRecipeScreen(shared: s)));
+    _load();
+  }
+
   @override
   void dispose() {
+    shareArrived.removeListener(_openShared);
     _lifecycle.dispose();
     _debounce?.cancel();
     _search.dispose();
