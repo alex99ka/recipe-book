@@ -5,6 +5,7 @@ import '../core/errors.dart';
 import '../core/tour.dart';
 import '../recipes/api.dart';
 import '../recipes/scaling.dart';
+import 'cookbook_screen.dart';
 import 'edit_recipe_screen.dart';
 import 'recipe_comments.dart';
 import 'recipe_widgets.dart';
@@ -287,7 +288,16 @@ class _RecipeScreenState extends State<RecipeScreen> {
                           Text('תגיות', style: text.titleMedium),
                           const SizedBox(height: 8),
                           Wrap(spacing: 8, runSpacing: 8, children: [
-                            for (final t in r.allTags) Chip(label: Text(t)),
+                            for (final t in r.allTags)
+                              ActionChip(
+                                label: Text(t),
+                                tooltip: 'כל המתכונים עם $t',
+                                onPressed: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute<void>(
+                                        builder: (_) =>
+                                            CookbookScreen(Shelf({'title': t}), tag: t))),
+                              ),
                           ]),
                         ],
                         if (r.sourceUrl.isNotEmpty && !isTikTok(r.sourceUrl))

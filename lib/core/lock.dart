@@ -8,15 +8,30 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config.dart';
 
-/// Fingerprint (Windows Hello on the PC) lock, opt-in. Google is needed once;
-/// after that the app stays signed in and, when this is on, opening it (or
-/// coming back after [relockAfter]) asks for the fingerprint, with the
-/// device PIN as the fallback. A failed fingerprint never signs out.
+/// Fingerprint (Windows Hello on the PC) sign-in, opt-in. The app always stays
+/// signed in and never asks on opening: a recipe book isn't that private, and
+/// a lock at every visit gets in the way of cooking. When this is on, "יציאה"
+/// only puts the app behind the fingerprint, and signing back in is a touch
+/// instead of Google (the device PIN as the fallback). A failed fingerprint
+/// never signs out; "כניסה עם Google" there does a real sign-out.
 
 const _onKey = 'fingerprint_lock';
-const _offeredKey = 'fingerprint_offered';
-const relockAfter = Duration(minutes: 5);
+const _outKey = 'fingerprint_signed_out';
 const _system = MethodChannel('app/system');
+
+/// Signed out with the fingerprint on: the app waits behind the fingerprint.
+final fingerprintSignedOut = ValueNotifier<bool>(false);
+
+/// "יציאה" with the fingerprint on: the session stays, the app locks.
+Future<void> signOutToFingerprint() async {
+  await (await SharedPreferences.getInstance()).setBool(_outKey, true);
+  fingerprintSignedOut.value = true;
+}
+
+Future<void> _clearSignedOut() async {
+  await (await SharedPreferences.getInstance()).setBool(_outKey, false);
+  fingerprintSignedOut.value = false;
+}
 
 enum FingerprintResult { enabled, cancelled, unsupported }
 
@@ -31,16 +46,9 @@ Future<bool?> fingerprintSetting() async {
   }
 }
 
-Future<void> disableFingerprint() async =>
-    (await SharedPreferences.getInstance()).setBool(_onKey, false);
-
-/// Offered once, after the first sign-in on this device.
-Future<bool> shouldOfferFingerprint() async {
-  if (await fingerprintSetting() != false) return false;
-  final prefs = await SharedPreferences.getInstance();
-  if (prefs.getBool(_offeredKey) ?? false) return false;
-  await prefs.setBool(_offeredKey, true);
-  return true;
+Future<void> disableFingerprint() async {
+  await (await SharedPreferences.getInstance()).setBool(_onKey, false);
+  await _clearSignedOut();
 }
 
 /// Turns the lock on the way the phone expects: if no fingerprint is enrolled
@@ -81,10 +89,13 @@ Future<FingerprintResult> enableFingerprint() async {
 }
 
 class AppLock extends StatefulWidget {
-  const AppLock({super.key, required this.signedIn, required this.child});
+  const AppLock({super.key, required this.signedIn, required this.signOut, required this.child});
 
   /// Nothing to lock on the sign-in screen.
   final bool Function() signedIn;
+
+  /// The real sign-out, for "כניסה עם Google" on the lock.
+  final Future<void> Function() signOut;
   final Widget child;
 
   @override
@@ -94,35 +105,40 @@ class AppLock extends StatefulWidget {
 class _AppLockState extends State<AppLock> {
   bool _locked = false;
   bool _asking = false;
-  DateTime? _leftAt;
-  late final AppLifecycleListener _lifecycle;
 
   @override
   void initState() {
     super.initState();
-    _lifecycle = AppLifecycleListener(
-      onHide: () => _leftAt = DateTime.now(),
-      onShow: () {
-        final left = _leftAt;
-        if (left != null && DateTime.now().difference(left) >= relockAfter) {
-          _lock();
-        }
-      },
-    );
-    _lock();
+    fingerprintSignedOut.addListener(_onSignedOut);
+    // Signed out with the fingerprint last time: still behind it after a restart.
+    SharedPreferences.getInstance().then((p) {
+      if (p.getBool(_outKey) ?? false) fingerprintSignedOut.value = true;
+    });
   }
 
   @override
   void dispose() {
-    _lifecycle.dispose();
+    fingerprintSignedOut.removeListener(_onSignedOut);
     super.dispose();
   }
 
+  void _onSignedOut() {
+    if (fingerprintSignedOut.value) _lock();
+  }
+
   Future<void> _lock() async {
-    if (!widget.signedIn() || await fingerprintSetting() != true) return;
+    if (!widget.signedIn() || await fingerprintSetting() != true) {
+      await _clearSignedOut(); // nothing to come back to by fingerprint
+      return;
+    }
     if (!mounted) return;
     setState(() => _locked = true);
-    await _unlock();
+  }
+
+  Future<void> _google() async {
+    await _clearSignedOut();
+    await widget.signOut();
+    if (mounted) setState(() => _locked = false);
   }
 
   Future<void> _unlock() async {
@@ -133,13 +149,16 @@ class _AppLockState extends State<AppLock> {
         localizedReason: 'פתיחת ${AppConfig.name}',
         persistAcrossBackgrounding: true,
       );
-      if (ok && mounted) setState(() => _locked = false);
+      if (ok) {
+        await _clearSignedOut();
+        if (mounted) setState(() => _locked = false);
+      }
     } on LocalAuthException catch (e) {
       // The fingerprint was removed from the phone: don't lock anyone out.
       if (e.code == LocalAuthExceptionCode.noCredentialsSet ||
           e.code == LocalAuthExceptionCode.noBiometricHardware) {
         await disableFingerprint();
-        if (mounted) setState(() => _locked = false);
+        await _google();
       }
       // Cancelled or too many tries: the button below retries.
     } finally {
@@ -164,8 +183,10 @@ class _AppLockState extends State<AppLock> {
                       FilledButton.icon(
                         onPressed: _unlock,
                         icon: const Icon(Icons.fingerprint),
-                        label: const Text('פתיחה בטביעת אצבע'),
+                        label: const Text('כניסה בטביעת אצבע'),
                       ),
+                      const SizedBox(height: 12),
+                      TextButton(onPressed: _google, child: const Text('כניסה עם Google')),
                     ],
                   ),
                 ),

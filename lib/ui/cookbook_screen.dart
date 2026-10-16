@@ -9,8 +9,11 @@ import 'skeleton.dart';
 /// One cookbook's recipes: a scanned one in page order, or one of the book's
 /// own in the order added, which can be renamed, sent to a friend or deleted.
 class CookbookScreen extends StatefulWidget {
-  const CookbookScreen(this.shelf, {super.key});
+  const CookbookScreen(this.shelf, {super.key, this.tag});
   final Shelf shelf;
+
+  /// Instead of a cookbook: every recipe with this tag or category.
+  final String? tag;
 
   @override
   State<CookbookScreen> createState() => _CookbookScreenState();
@@ -29,7 +32,8 @@ class _CookbookScreenState extends State<CookbookScreen> {
 
   Future<void> _load() async {
     try {
-      final r = await Api.recipes(cookbook: widget.shelf.slug, collection: widget.shelf.id);
+      final r = await Api.recipes(
+          cookbook: widget.shelf.slug, collection: widget.shelf.id, tag: widget.tag);
       if (mounted) setState(() { _recipes = r; _error = null; });
     } catch (e) {
       if (mounted) setState(() => _error = e);

@@ -5,9 +5,15 @@ Notable changes, newest first, for the people using the app. Format:
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). The release
 workflow takes the section of the tagged version as the release notes and as
 the "what's new" text inside the app, so write it for them, in Hebrew.
-Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app).
+Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app, archived).
 
 ## [Unreleased]
+
+### Added
+- חיפוש לפי תגית: התגיות מופיעות מתחת לחיפוש, ולחיצה על תגית בתוך מתכון מציגה את כל המתכונים שלה.
+
+### Changed
+- האפליקציה נשארת מחוברת ולא מבקשת טביעת אצבע בכל פתיחה. טביעת האצבע (אם הופעלה בהגדרות) משמשת רק לכניסה חוזרת אחרי יציאה.
 
 ## [5.1.0] - 2026-10-16
 

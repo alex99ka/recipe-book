@@ -1,7 +1,7 @@
 # ספר מתכונים (Flutter): context
 
 The recipe book app on the `make-an-app` core (copied from `app-shell` on
-2026-10-15). It replaces the Ionic app `alex99ka/recipe-book-app` (4.x) under
+2026-10-15). It replaces the Ionic app `alex99ka/recipe-book-app` (4.x, archived) under
 the same id and key; the plan and its phases are in that repo's
 `docs/standard-plan.md` (phase 1a = this repo's 5.0.0).
 

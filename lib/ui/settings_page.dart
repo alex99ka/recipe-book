@@ -202,7 +202,7 @@ class _SettingsPageState extends State<SettingsPage> {
             child: SwitchListTile(
               secondary: const Icon(Icons.fingerprint),
               title: const Text('כניסה בטביעת אצבע'),
-              subtitle: const Text('נפתח בטביעת אצבע, ואחרי 5 דקות בחוץ'),
+              subtitle: const Text('אחרי יציאה, נכנסים שוב בטביעת אצבע במקום Google'),
               value: _fingerprint!,
               onChanged: _toggleFingerprint,
             ),
@@ -285,7 +285,9 @@ class _SettingsPageState extends State<SettingsPage> {
               context: context,
               builder: (c) => AlertDialog(
                 title: const Text('לצאת מהחשבון?'),
-                content: const Text('הכניסה הבאה תהיה שוב עם Google.'),
+                content: Text(_fingerprint == true
+                    ? 'הכניסה הבאה בטביעת אצבע.'
+                    : 'הכניסה הבאה תהיה שוב עם Google.'),
                 actions: [
                   TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('ביטול')),
                   FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('יציאה')),
@@ -294,7 +296,11 @@ class _SettingsPageState extends State<SettingsPage> {
             );
             if (yes != true || !context.mounted) return;
             Navigator.popUntil(context, (r) => r.isFirst);
-            await Auth.signOut();
+            if (_fingerprint == true) {
+              await signOutToFingerprint();
+            } else {
+              await Auth.signOut();
+            }
           },
         ),
         const SizedBox(height: 32),

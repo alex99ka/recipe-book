@@ -2,12 +2,12 @@ name: Promote
 
 # Patient zero is happy: the prerelease becomes everyone's update, and the
 # web build on the "next" channel becomes the live site.
-#   gh workflow run promote.yml -f version=1.4.0
+#   gh workflow run promote.yml -f version=5.1.0
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: The release to promote (e.g. 1.4.0)
+        description: The release to promote (e.g. 5.1.0)
         required: true
 
 permissions: {}

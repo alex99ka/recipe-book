@@ -7,7 +7,7 @@ cookbooks, in Hebrew, shared with friends, and shown on the kitchen's e-ink
 screen. One Flutter codebase for **Android, Web (the iPad) and Windows**, on
 the `make-an-app` core (`alex99ka/app-shell`).
 
-This replaces the Ionic app (`alex99ka/recipe-book-app`, versions up to 4.x)
+This replaces the Ionic app (`alex99ka/recipe-book-app`, archived, versions up to 4.x)
 under the **same Android id and signing key**, so it installs over it in place.
 The data never lived in the app, so nothing moves: everyone signs in with
 Google once more.

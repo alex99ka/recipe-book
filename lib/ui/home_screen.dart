@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../config.dart';
 import '../core/app_info.dart';
 import '../core/errors.dart';
-import '../core/lock.dart';
 import '../core/remote_config.dart';
 import '../core/tour.dart';
 import '../core/update.dart';
@@ -34,6 +33,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _debounce;
   bool _searching = false;
   String _q = '';
+
+  /// The tag picked under the search box; null for none.
+  String? _tag;
+
+  /// The book's tags, loaded when search first opens.
+  List<String>? _tags;
+
+  /// Not searching: the shelves and the latest recipes.
+  bool get _browsing => _q.isEmpty && _tag == null;
   int _loads = 0;
 
   List<Summary>? _recipes;
@@ -72,34 +80,6 @@ class _HomeScreenState extends State<HomeScreen> {
         content: Text('מה חדש בגרסה ${AppInfo.version}: ${AppConfig.releaseNotes}'),
       ));
     }
-    if (steps == null && await shouldOfferFingerprint() && mounted) {
-      _offerFingerprint(messenger);
-    }
-  }
-
-  Future<void> _offerFingerprint(ScaffoldMessengerState messenger) async {
-    final yes = await showDialog<bool>(
-      context: context,
-      builder: (c) => AlertDialog(
-        icon: const Icon(Icons.fingerprint),
-        title: const Text('להיכנס בטביעת אצבע?'),
-        content: const Text('בפעם הבאה שתפתחו את האפליקציה, טביעת אצבע במקום '
-            'Google. אפשר לשנות בהגדרות.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('לא עכשיו')),
-          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('כן')),
-        ],
-      ),
-    );
-    if (yes != true) return;
-    final r = await enableFingerprint();
-    messenger.showSnackBar(SnackBar(
-      content: Text(switch (r) {
-        FingerprintResult.enabled => 'טביעת האצבע פעילה',
-        FingerprintResult.cancelled => 'לא הופעל. אפשר להפעיל בהגדרות',
-        FingerprintResult.unsupported => errorText(Errors.noBiometrics),
-      }),
-    ));
   }
 
   @override
@@ -113,17 +93,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _load() async {
     final seq = ++_loads;
     final q = _q;
+    final browsing = _browsing;
     try {
       final results = await Future.wait([
-        Api.recipes(q: q),
-        if (q.isEmpty) Api.collections(),
-        if (q.isEmpty) Api.cookbooks(),
+        Api.recipes(q: q, tag: _tag),
+        if (browsing) Api.collections(),
+        if (browsing) Api.cookbooks(),
       ]);
       if (seq != _loads || !mounted) return; // a newer search started meanwhile
       setState(() {
         _error = null;
         _recipes = results[0] as List<Summary>;
-        if (q.isEmpty) {
+        if (browsing) {
           _collections = results[1] as List<Shelf>;
           _cookbooks = results[2] as List<Shelf>;
         }
@@ -160,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final recipes = _recipes;
-    final shown = recipes == null ? null : (_q.isEmpty ? recipes.take(30).toList() : recipes);
+    final shown = recipes == null ? null : (_browsing ? recipes.take(30).toList() : recipes);
     return Scaffold(
       appBar: AppBar(
         title: _searching
@@ -179,9 +160,15 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icon(_searching ? Icons.close : Icons.search),
               onPressed: () {
                 setState(() => _searching = !_searching);
-                if (!_searching && _q.isNotEmpty) {
+                if (_searching && _tags == null) {
+                  Api.tags().then((t) {
+                    if (mounted) setState(() => _tags = t);
+                  }, onError: (_) {}); // searching by text still works
+                }
+                if (!_searching && !_browsing) {
                   _search.clear();
                   _q = '';
+                  _tag = null;
                   _load();
                 }
               },
@@ -237,7 +224,32 @@ class _HomeScreenState extends State<HomeScreen> {
                       onRefresh: _load,
                       child: ListView(children: [
                         if (_error != null) LoadError(_error!, retry: _load),
-                        if (_q.isEmpty) ...[
+                        if (_searching && (_tags?.isNotEmpty ?? false))
+                          TourTarget(
+                            'home.tags',
+                            child: SizedBox(
+                              height: 56,
+                              child: ListView(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                children: [
+                                  for (final t in _tags!)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                                      child: FilterChip(
+                                        label: Text(t),
+                                        selected: _tag == t,
+                                        onSelected: (on) {
+                                          setState(() => _tag = on ? t : null);
+                                          _load();
+                                        },
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        if (_browsing) ...[
                           const _Header('הספרים שלי'),
                           TourTarget(
                             'home.mine',
@@ -258,11 +270,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ],
-                        _Header(_q.isEmpty ? 'נוספו לאחרונה' : 'תוצאות'),
+                        _Header(_browsing ? 'נוספו לאחרונה' : _tag != null && _q.isEmpty ? 'תגית: $_tag' : 'תוצאות'),
                         if (shown.isEmpty)
                           Padding(
                             padding: const EdgeInsets.all(48),
-                            child: Text(_q.isEmpty ? 'הספר עוד ריק.' : 'לא נמצא מתכון.',
+                            child: Text(_browsing ? 'הספר עוד ריק.' : 'לא נמצא מתכון.',
                                 textAlign: TextAlign.center),
                           ),
                         for (final (i, r) in shown.indexed)

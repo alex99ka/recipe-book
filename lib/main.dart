@@ -8,6 +8,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'config.dart';
 import 'core/app_info.dart';
+import 'core/auth.dart';
 import 'core/errors.dart';
 import 'core/lock.dart';
 import 'core/remote_config.dart';
@@ -112,6 +113,7 @@ class _AppState extends State<App> {
         initialRoute: '/',
         // The walkthrough over every screen, the fingerprint lock over that.
         builder: (context, screens) => AppLock(
+          signOut: Auth.signOut,
           signedIn: () {
             try {
               return FirebaseAuth.instance.currentUser != null;

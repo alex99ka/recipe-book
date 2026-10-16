@@ -167,14 +167,22 @@ abstract final class Api {
 
   // ---- reading ----
 
-  static Future<List<Summary>> recipes({String q = '', String? cookbook, int? collection}) async {
+  static Future<List<Summary>> recipes(
+      {String q = '', String? cookbook, int? collection, String? tag}) async {
     final query = {
       if (q.isNotEmpty) 'q': q,
+      'tag': ?tag,
       'cookbook': ?cookbook,
       'collection': ?collection?.toString(),
     };
     final list = await server('GET', Uri(path: '/recipes', queryParameters: query.isEmpty ? null : query).toString()) as List;
     return [for (final r in list) Summary(r as Map<String, dynamic>)];
+  }
+
+  /// The book's tags and categories, together and sorted, for picking one.
+  static Future<List<String>> tags() async {
+    final j = await server('GET', '/tags') as Map;
+    return {..._strings(j['tags']), ..._strings(j['categories'])}.toList()..sort();
   }
 
   static Future<List<Shelf>> cookbooks() async =>
