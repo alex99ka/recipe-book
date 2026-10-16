@@ -118,7 +118,13 @@ Each phase ships on its own as one release (or, for phase 0, with no app release
   gets Angular's safety worker at `ngsw-worker.js`, so the old PWA steps aside.
 - *Verified:* 5.0.1 updated itself to 5.1.0 on Alex's phone; every 4.x flow works there.
 
-### Phase 2: sign-in, errors, settings set (5.2.0)
+### Phase 2: sign-in, errors, settings set — built 2026-10-16, ships in 5.3.0
+Most of it came with the core in 5.0.0 (no-access screen, switch account, version on the
+sign-in screen, error catalog, timeouts, theme, diagnostics, report). Added: last sign-in,
+401 → sign-in screen, a deadline on the token refresh, a screenshot in the report, and the
+nightly backup's time in diagnostics (server change, deployed when Alex is home). 5.2.0
+went out as tag search + staying signed in (fingerprint only to sign back in).
+
 - "אין גישה" screen for uninvited accounts, switch account, last sign-in, version on the
   sign-in screen, timeouts on every call, the full Settings set, security note.
 
