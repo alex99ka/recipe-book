@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -9,6 +10,7 @@ import '../core/diagnostics.dart';
 import '../core/errors.dart';
 import '../core/home_widgets.dart';
 import '../core/lock.dart';
+import '../core/notifications.dart';
 import '../core/remote_config.dart';
 import '../core/report.dart';
 import '../core/settings_store.dart';
@@ -34,6 +36,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool? _fingerprint;
+  Map<String, bool>? _notify;
 
   @override
   void initState() {
@@ -41,6 +44,22 @@ class _SettingsPageState extends State<SettingsPage> {
     fingerprintSetting().then((v) {
       if (mounted) setState(() => _fingerprint = v);
     });
+    if (pushSupported) {
+      notificationPrefs().then((v) {
+        if (mounted) setState(() => _notify = v);
+      }).ignore(); // offline: the switches just don't show
+    }
+  }
+
+  Future<void> _setNotify(String type, bool on) async {
+    setState(() => _notify = {..._notify!, type: on});
+    try {
+      final saved = await setNotificationPref(type, on);
+      if (mounted) setState(() => _notify = saved);
+    } catch (e) {
+      if (mounted) setState(() => _notify = {..._notify!, type: !on});
+      showError(_messenger, e, 'השינוי לא נשמר');
+    }
   }
 
   ScaffoldMessengerState get _messenger => ScaffoldMessenger.of(context);
@@ -220,6 +239,24 @@ class _SettingsPageState extends State<SettingsPage> {
           title: const Text('מה חדש בגרסה הזו'),
           onTap: _whatsNew,
         ),
+
+        if (pushSupported) ...[
+          _Section('התראות'),
+          if (kIsWeb)
+            ListTile(
+              leading: const Icon(Icons.notifications_active_outlined),
+              title: const Text('התראות במכשיר הזה'),
+              subtitle: const Text('באייפד: רק מהאפליקציה שבמסך הבית'),
+              onTap: () async => _say(await enableWebNotifications()),
+            ),
+          if (_notify case final n?)
+            for (final e in notificationTypes.entries)
+              SwitchListTile(
+                title: Text(e.value),
+                value: n[e.key] ?? true,
+                onChanged: (v) => _setNotify(e.key, v),
+              ),
+        ],
 
         _Section('כניסה ואבטחה'),
         if (_fingerprint != null)

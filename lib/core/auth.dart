@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../config.dart';
 import 'errors.dart';
+import 'notifications.dart';
 
 /// Google sign-in on every platform, ending in a Firebase session that stays
 /// signed in: nothing here signs out except the user's own "יציאה".
@@ -67,6 +68,7 @@ abstract final class Auth {
   }
 
   static Future<void> signOut() async {
+    await forgetThisDevice(); // while the server still knows who this is
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android && _googleReady) {
       await GoogleSignIn.instance.signOut();
     }

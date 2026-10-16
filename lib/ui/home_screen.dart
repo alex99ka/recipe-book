@@ -6,6 +6,7 @@ import '../config.dart';
 import '../core/app_info.dart';
 import '../core/errors.dart';
 import '../core/home_widgets.dart';
+import '../core/notifications.dart';
 import '../core/remote_config.dart';
 import '../core/share_in.dart';
 import '../core/tour.dart';
@@ -14,6 +15,7 @@ import '../core/web_update.dart';
 import '../recipes/api.dart';
 import '../recipes/offline.dart';
 import 'add_recipe_screen.dart';
+import 'recipe_screen.dart';
 import 'cookbook_screen.dart';
 import 'inbox_screen.dart';
 import 'recipe_widgets.dart';
@@ -69,6 +71,21 @@ class _HomeScreenState extends State<HomeScreen> {
       if (action == 'add' && mounted) _add();
     });
     _openShared(); // the share that started the app
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setUpNotifications(ScaffoldMessenger.of(context), onOpen: _openPushed).ignore();
+      }
+    });
+  }
+
+  /// A tapped notification: the recipe it is about, or what friends sent.
+  void _openPushed(Map<String, dynamic> data) {
+    if (!mounted) return;
+    final recipe = data['recipe'] as String?;
+    Navigator.push(context, MaterialPageRoute<void>(
+        builder: (_) => recipe != null
+            ? RecipeScreen(recipe, title: data['title'] as String? ?? '')
+            : const InboxScreen()));
   }
 
   void _checkUpdates() {

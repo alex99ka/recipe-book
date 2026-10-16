@@ -139,7 +139,14 @@ icon really light brown. Light/dark, fingerprint, skeletons and the tour came wi
 - 2–3 Android home widgets (recently added, quick add, shopping list), share target:
   share a link/video/photo to the app to add a recipe.
 
-### Phase 4: notifications (5.4.0)
+### Phase 4: notifications (5.4.0) — built 2026-10-16
+Done: FCM from the Pi (server/push.py; tokens and per-type switches in Postgres, since
+this app has no Firestore): a friend sent a recipe or cookbook, a comment on a recipe you
+read (including the conversation with a friend), a new recipe's Hebrew is ready. Settings
+has a switch per type, and "התראות במכשיר הזה" on the web. Not done: a "new version" push
+(the app already updates itself silently), Windows (no FCM there), and a backup-failure
+push (backup.py already alerts on Telegram).
+
 - FCM from the Pi: a friend sent you something, a translation finished, a comment on your
   recipe, a new version; alert to you when a backup or job fails. Per-type toggles, web push.
 - Needs from you: grant the service account "Firebase Cloud Messaging API Admin" (one command).
