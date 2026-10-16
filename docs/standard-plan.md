@@ -118,17 +118,17 @@ Each phase ships on its own as one release (or, for phase 0, with no app release
   gets Angular's safety worker at `ngsw-worker.js`, so the old PWA steps aside.
 - *Verified:* 5.0.1 updated itself to 5.1.0 on Alex's phone; every 4.x flow works there.
 
-### Phase 2: sign-in, errors, settings set — built 2026-10-16, ships in 5.3.0
+### Phase 2: sign-in, errors, settings set — shipped in 5.3.0 (prerelease 2026-10-16)
 Most of it came with the core in 5.0.0 (no-access screen, switch account, version on the
 sign-in screen, error catalog, timeouts, theme, diagnostics, report). Added: last sign-in,
 401 → sign-in screen, a deadline on the token refresh, a screenshot in the report, and the
-nightly backup's time in diagnostics (server change, deployed when Alex is home). 5.2.0
+nightly backup's time in diagnostics (server change, deployed 2026-10-16). 5.2.0
 went out as tag search + staying signed in (fingerprint only to sign back in).
 
 - "אין גישה" screen for uninvited accounts, switch account, last sign-in, version on the
   sign-in screen, timeouts on every call, the full Settings set, security note.
 
-### Phase 3: UI standard — built 2026-10-16, ships in 5.3.0
+### Phase 3: UI standard — shipped in 5.3.0 (prerelease 2026-10-16)
 Done: undo toasts (comments, own cookbooks), long-press menus, two home widgets (newest
 recipes, new recipe), share target (link/video/photo/PDF → new recipe), native splash, the
 icon really light brown. Light/dark, fingerprint, skeletons and the tour came with 5.0.0.
@@ -144,7 +144,7 @@ icon really light brown. Light/dark, fingerprint, skeletons and the tour came wi
   recipe, a new version; alert to you when a backup or job fails. Per-type toggles, web push.
 - Needs from you: grant the service account "Firebase Cloud Messaging API Admin" (one command).
 
-### Phase 5: data and offline — built 2026-10-16, ships in 5.3.0 (before phase 4, which needs a server deploy)
+### Phase 5: data and offline — shipped in 5.3.0 (prerelease 2026-10-16)
 Done: export (JSON + CSV with a BOM for Excel) from Settings, built in the app from the API;
 the home lists and the 40 most recently opened recipes cached for reading without a
 connection, with a banner. Recipe photos aren't cached (only what the image cache holds).
