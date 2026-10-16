@@ -62,8 +62,19 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/update_paths" />
         </provider>
-        <!-- Home screen widgets (HomeWidgets.kt) are registered again in phase 3,
-             with the recipe app's own widgets. -->
+        <!-- Home screen widgets (HomeWidgets.kt; data from lib/core/home_widgets.dart). -->
+        <receiver android:name=".SummaryWidget" android:label="נוספו לאחרונה" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_summary_info" />
+        </receiver>
+        <receiver android:name=".QuickAddWidget" android:label="מתכון חדש" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_quick_add_info" />
+        </receiver>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

@@ -5,12 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
 
-/// Android home screen widgets (android/.../HomeWidgets.kt): a summary and a
-/// quick-add button. While the app runs it keeps the summary's data fresh.
-/// A new app replaces both with its own 2–3 (today / a key number / quick
-/// actions) and keeps this plumbing.
+/// Android home screen widgets (android/.../HomeWidgets.kt): the newest
+/// recipes, and a "מתכון חדש" button. While the app runs it keeps the list fresh.
 const _package = 'com.alex99ka.recipes';
-const widgets = {'SummaryWidget': 'סיכום', 'QuickAddWidget': 'הוספה מהירה'};
+const widgets = {'SummaryWidget': 'נוספו לאחרונה', 'QuickAddWidget': 'מתכון חדש'};
 
 bool get homeWidgetsSupported =>
     !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
@@ -18,9 +16,9 @@ bool get homeWidgetsSupported =>
 String? _last;
 
 /// Cheap to call on every rebuild: writes only when the data changed.
-void updateHomeWidgets({required int open, List<String> titles = const []}) {
+void updateHomeWidgets(List<String> newest) {
   if (!homeWidgetsSupported) return;
-  final data = jsonEncode({'open': open, 'titles': titles.take(3).toList()});
+  final data = jsonEncode({'titles': newest.take(3).toList()});
   if (data == _last) return;
   _last = data;
   () async {

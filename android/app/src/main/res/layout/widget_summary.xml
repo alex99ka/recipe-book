@@ -23,7 +23,7 @@
         android:ellipsize="end"
         android:gravity="start"
         android:maxLines="3"
-        android:textColor="#1F2A26"
+        android:textColor="#2B231C"
         android:textDirection="rtl"
         android:textSize="14sp" />
 </LinearLayout>

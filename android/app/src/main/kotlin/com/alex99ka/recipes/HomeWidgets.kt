@@ -15,16 +15,15 @@ import org.json.JSONObject
 private fun open(context: Context, action: String) =
     HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java, Uri.parse("recipebook://$action"))
 
-/** How many items are open, and the first few. */
+/** The newest recipes in the book. */
 class SummaryWidget : HomeWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray, data: SharedPreferences) {
         val json = runCatching { JSONObject(data.getString("summary", null) ?: "{}") }.getOrDefault(JSONObject())
-        val open = json.optInt("open", 0)
         val titles = json.optJSONArray("titles")
         val lines = if (titles == null) emptyList() else (0 until titles.length()).map { "• " + titles.getString(it) }
         for (id in ids) {
             val views = RemoteViews(context.packageName, R.layout.widget_summary).apply {
-                setTextViewText(R.id.title, if (open == 0) "הכול בוצע" else "$open פתוחים")
+                setTextViewText(R.id.title, "נוספו לאחרונה")
                 setTextViewText(R.id.body, lines.joinToString("\n"))
                 setOnClickPendingIntent(R.id.root, open(context, "open"))
             }
@@ -33,7 +32,7 @@ class SummaryWidget : HomeWidgetProvider() {
     }
 }
 
-/** One tap to the quick-add field. */
+/** One tap to "מתכון חדש". */
 class QuickAddWidget : HomeWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray, data: SharedPreferences) {
         for (id in ids) {

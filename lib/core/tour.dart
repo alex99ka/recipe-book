@@ -147,6 +147,14 @@ final fullTour = <TourStep>[
     since: ['5.1.0'],
   ),
   const TourStep(
+    'לחיצה ארוכה',
+    'לחיצה ארוכה על מתכון פותחת קיצורים: עריכה ושליחה לחבר. על ספר משלכם: '
+        'שינוי שם, שליחה ומחיקה. מחיקה של ספר או תגובה אפשר לבטל ב-5 השניות שאחריה.',
+    target: 'home.first',
+    optional: true,
+    since: ['5.3.0'],
+  ),
+  const TourStep(
     'מתכון',
     'לחצו על מתכון.',
     target: 'home.first',

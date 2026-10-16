@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../config.dart';
 import '../core/app_info.dart';
 import '../core/errors.dart';
+import '../core/home_widgets.dart';
 import '../core/remote_config.dart';
 import '../core/share_in.dart';
 import '../core/tour.dart';
@@ -63,6 +64,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     _load().then((_) => _afterFirstLoad());
     shareArrived.addListener(_openShared);
+    _widgetTaps = listenWidgetTaps((action) {
+      if (action == 'add' && mounted) _add();
+    });
     _openShared(); // the share that started the app
   }
 
@@ -95,8 +99,15 @@ class _HomeScreenState extends State<HomeScreen> {
     _load();
   }
 
+  StreamSubscription<Uri?>? _widgetTaps;
+
+  void _add() => Navigator.push(
+          context, MaterialPageRoute<void>(builder: (_) => const AddRecipeScreen()))
+      .then((_) => _load());
+
   @override
   void dispose() {
+    _widgetTaps?.cancel();
     shareArrived.removeListener(_openShared);
     _lifecycle.dispose();
     _debounce?.cancel();
@@ -119,6 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _error = null;
         _recipes = results[0] as List<Summary>;
         if (browsing) {
+          updateHomeWidgets([for (final r in _recipes!) r.title]);
           _collections = results[1] as List<Shelf>;
           _cookbooks = results[2] as List<Shelf>;
         }
@@ -265,9 +277,7 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: TourTarget(
         'home.add',
         child: FloatingActionButton.extended(
-          onPressed: () => Navigator.push(
-                  context, MaterialPageRoute<void>(builder: (_) => const AddRecipeScreen()))
-              .then((_) => _load()),
+          onPressed: _add,
           icon: const Icon(Icons.add),
           label: const Text('מתכון חדש'),
         ),

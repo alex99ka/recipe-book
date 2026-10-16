@@ -7,6 +7,7 @@ import '../core/app_info.dart';
 import '../core/auth.dart';
 import '../core/diagnostics.dart';
 import '../core/errors.dart';
+import '../core/home_widgets.dart';
 import '../core/lock.dart';
 import '../core/remote_config.dart';
 import '../core/report.dart';
@@ -171,6 +172,13 @@ class _SettingsPageState extends State<SettingsPage> {
           onTap: () => launchUrl(Uri.parse('https://alex-todo-shopping.web.app'),
               mode: LaunchMode.externalApplication),
         ),
+        if (homeWidgetsSupported)
+          ListTile(
+            leading: const Icon(Icons.widgets_outlined),
+            title: const Text('הוספת וידג׳ט למסך הבית'),
+            subtitle: const Text('המתכונים האחרונים, או כפתור למתכון חדש'),
+            onTap: () => pinHomeWidget(context),
+          ),
         _Section('עדכונים'),
         TourTarget(
           'settings.update',
