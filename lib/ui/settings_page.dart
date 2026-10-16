@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../config.dart';
 import '../core/app_info.dart';
@@ -143,6 +144,15 @@ class _SettingsPageState extends State<SettingsPage> {
             onTap: () => Navigator.push(
                 context, MaterialPageRoute<void>(builder: (_) => const PanelScreen())),
           ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.checklist),
+          title: const Text('המשימות והקניות'),
+          subtitle: const Text('אותו חשבון ואותו בית'),
+          trailing: const Icon(Icons.open_in_new),
+          // The to-do app takes its own link over when installed; otherwise the web.
+          onTap: () => launchUrl(Uri.parse('https://alex-todo-shopping.web.app'),
+              mode: LaunchMode.externalApplication),
         ),
         _Section('עדכונים'),
         TourTarget(
