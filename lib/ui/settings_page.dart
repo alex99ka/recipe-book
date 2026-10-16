@@ -17,6 +17,7 @@ import '../core/web_update.dart';
 import '../recipes/api.dart';
 import 'friends_screen.dart';
 import 'panel_screen.dart';
+import 'pick.dart';
 import 'skeleton.dart';
 
 /// The standard set, in this order: updates, sign-in and security, look,
@@ -57,28 +58,44 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _report() async {
     final c = TextEditingController();
+    Picked? shot;
     final text = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('דיווח על בעיה'),
-        content: TextField(
-          controller: c,
-          autofocus: true,
-          maxLines: 5,
-          decoration: const InputDecoration(
-              hintText: 'מה קרה? מה ניסיתם לעשות?',
-              helperText: 'יישלחו גם הגרסה, המכשיר והשגיאות האחרונות',
-              helperMaxLines: 2),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, set) => AlertDialog(
+          title: const Text('דיווח על בעיה'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            TextField(
+              controller: c,
+              autofocus: true,
+              maxLines: 5,
+              decoration: const InputDecoration(
+                  hintText: 'מה קרה? מה ניסיתם לעשות?',
+                  helperText: 'יישלחו גם הגרסה, המכשיר והשגיאות האחרונות',
+                  helperMaxLines: 2),
+            ),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton.icon(
+                icon: Icon(shot == null ? Icons.add_photo_alternate_outlined : Icons.check),
+                label: Text(shot == null ? 'צירוף צילום מסך (לא חובה)' : 'צורף: ${shot!.$2}'),
+                onPressed: () async {
+                  final p = await pickPhoto(ctx);
+                  if (p != null) set(() => shot = p);
+                },
+              ),
+            ),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('ביטול')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: const Text('שליחה')),
+          ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('ביטול')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: const Text('שליחה')),
-        ],
       ),
     );
     if (text == null || text.trim().isEmpty) return;
     try {
-      await sendProblemReport(text.trim());
+      await sendProblemReport(text.trim(), screenshot: shot?.$1);
       _say('הדיווח נשלח. תודה!');
     } catch (e) {
       showError(_messenger, e, 'שליחת הדיווח נכשלה');

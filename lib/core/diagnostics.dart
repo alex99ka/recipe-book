@@ -41,7 +41,7 @@ Future<List<Check>> runDiagnostics() async {
       final h = await server('GET', '/health');
       checks.add(const Check('השרת בבית', 'עונה', ok: true));
       final backup = h['last_backup'] as String?;
-      // The recipe server's backup runs from cron on the Pi and isn't reported here.
+      // The Pi's nightly Drive backup (backup.py) records it; null on an older server.
       if (backup != null) {
         final fresh = DateTime.now().difference(DateTime.parse(backup)).inHours < 36;
         checks.add(Check('גיבוי אחרון', backup.substring(0, 16), ok: fresh));
