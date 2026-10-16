@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '../config.dart';
 import 'errors.dart';
@@ -40,10 +41,23 @@ Future<dynamic> serverUpload(
   final req = http.MultipartRequest(method, Uri.parse('${AppConfig.serverUrl}$path'))
     ..fields.addAll(fields);
   for (final MapEntry(key: field, value: (bytes, name)) in files.entries) {
-    req.files.add(http.MultipartFile.fromBytes(field, bytes, filename: name));
+    // The server takes a file only when it says it is an image or a PDF.
+    req.files.add(http.MultipartFile.fromBytes(field, bytes,
+        filename: name, contentType: MediaType.parse(mimeOf(name))));
   }
   return _send(req, timeout: slowCall);
 }
+
+/// By extension; a photo the server can't name stays generic and is refused there.
+String mimeOf(String fileName) => switch (fileName.split('.').last.toLowerCase()) {
+      'jpg' || 'jpeg' => 'image/jpeg',
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      'heic' => 'image/heic',
+      'gif' => 'image/gif',
+      'pdf' => 'application/pdf',
+      _ => 'application/octet-stream',
+    };
 
 Future<dynamic> _send(http.BaseRequest req, {required Duration timeout}) async {
   final token = await FirebaseAuth.instance.currentUser?.getIdToken();
