@@ -9,6 +9,8 @@ Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app, archived).
 
 ## [Unreleased]
 
+## [5.3.0] - 2026-10-16
+
 ### Added
 - בהגדרות: מתי הייתה הכניסה האחרונה לחשבון.
 - ייצוא הספר בהגדרות: כל המתכונים והספרים כקובץ JSON וקובץ CSV שנפתח באקסל.
