@@ -34,6 +34,13 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- A friend's invite link opens the app (web/.well-known/assetlinks.json). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="alex-recipe-book.web.app" android:pathPrefix="/invite/"/>
+            </intent-filter>
         </activity>
         <!-- Installs a staged build once the app has been out of sight a while. -->
         <receiver android:exported="false" android:name=".UpdateReceiver" />

@@ -14,6 +14,8 @@ import '../core/tour.dart';
 import '../core/update.dart';
 import '../core/web_update.dart';
 import '../recipes/api.dart';
+import 'friends_screen.dart';
+import 'panel_screen.dart';
 import 'skeleton.dart';
 
 /// The standard set, in this order: updates, sign-in and security, look,
@@ -121,6 +123,27 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         ],
+        _Section('שיתוף'),
+        TourTarget(
+          'settings.friends',
+          child: ListTile(
+            leading: const Icon(Icons.people_outline),
+            title: const Text('חברים'),
+            subtitle: const Text('הזמנה בקישור, ושליחת מתכונים זה לזה'),
+            onTap: () => Navigator.push(
+                context, MaterialPageRoute<void>(builder: (_) => const FriendsScreen())),
+          ),
+        ),
+        TourTarget(
+          'settings.panel',
+          child: ListTile(
+            leading: const Icon(Icons.tablet_outlined),
+            title: const Text('המסך במטבח'),
+            subtitle: const Text('חיבור המסך לספר, והיומנים שהוא מציג'),
+            onTap: () => Navigator.push(
+                context, MaterialPageRoute<void>(builder: (_) => const PanelScreen())),
+          ),
+        ),
         _Section('עדכונים'),
         TourTarget(
           'settings.update',

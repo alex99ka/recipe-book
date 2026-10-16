@@ -5,8 +5,10 @@ import '../core/errors.dart';
 import '../core/tour.dart';
 import '../recipes/api.dart';
 import '../recipes/scaling.dart';
+import 'edit_recipe_screen.dart';
 import 'recipe_comments.dart';
 import 'recipe_widgets.dart';
+import 'send_dialog.dart';
 import 'skeleton.dart';
 
 /// A recipe in Hebrew: photo, rating, amounts ×1/×2/×3, cost, steps, and what
@@ -136,64 +138,19 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
   Future<void> _send() async {
     final r = _r!;
-    final List<Friend> friends;
-    try {
-      friends = await Api.friends();
-    } catch (e) {
-      showError(_messenger, e, 'החברים לא נטענו');
-      return;
-    }
+    final sent = await sendToFriend(context,
+        title: r.title, send: (to, note) => Api.send(r.id, to, note));
+    if (sent) await _comments.currentState?.load(); // the note opened a conversation
+  }
+
+  Future<void> _edit() async {
+    final result = await Navigator.push<Object?>(
+        context, MaterialPageRoute(builder: (_) => EditRecipeScreen(_r!)));
     if (!mounted) return;
-    if (friends.isEmpty) {
-      _messenger.showSnackBar(const SnackBar(
-          content: Text('עוד אין לכם חברים. הזמנת חברים מגיעה בגרסה 5.1, '
-              'ועד אז אפשר להזמין מהאפליקציה הקודמת.')));
-      return;
-    }
-    var to = friends.first;
-    final note = TextEditingController();
-    final go = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, set) => AlertDialog(
-          title: Text('לשלוח את „${r.title}”'),
-          content: SingleChildScrollView(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              const Text('החבר יקבל עותק משלו. שינויים שתעשו אחר כך לא יעברו אליו.'),
-              RadioGroup<String>(
-                groupValue: to.uid,
-                onChanged: (v) => set(() => to = friends.firstWhere((f) => f.uid == v)),
-                child: Column(children: [
-                  for (final f in friends) RadioListTile<String>(title: Text(f.name), value: f.uid),
-                ]),
-              ),
-              TextField(
-                controller: note,
-                maxLength: 1000,
-                maxLines: 3,
-                minLines: 1,
-                decoration: const InputDecoration(
-                    labelText: 'הערה (לא חובה)',
-                    hintText: 'למשל: נסו עם כבש',
-                    helperText: 'ההערה פותחת שיחה ששניכם רואים בתוך המתכון',
-                    helperMaxLines: 2),
-              ),
-            ]),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('ביטול')),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('שליחה')),
-          ],
-        ),
-      ),
-    );
-    if (go != true) return;
-    try {
-      await Api.send(r.id, to.uid, note.text.trim());
-      _messenger.showSnackBar(SnackBar(content: Text('נשלח ל${to.name}')));
-      await _comments.currentState?.load(); // the note opened a conversation
-    } catch (e) {
-      showError(_messenger, e, 'השליחה נכשלה');
+    if (result == 'deleted') {
+      Navigator.pop(context, 'deleted');
+    } else if (result == true) {
+      await _load();
     }
   }
 
@@ -216,7 +173,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
     final text = Theme.of(context).textTheme;
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     return Scaffold(
-      appBar: AppBar(title: Text(r?.title ?? widget.title)),
+      appBar: AppBar(title: Text(r?.title ?? widget.title), actions: [
+        if (r != null)
+          TourTarget(
+            'recipe.edit',
+            child: IconButton(tooltip: 'עריכה', icon: const Icon(Icons.edit_outlined), onPressed: _edit),
+          ),
+      ]),
       body: _error != null && r == null
           ? Center(child: LoadError(_error!, retry: _load))
           : r == null

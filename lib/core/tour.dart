@@ -125,10 +125,24 @@ final fullTour = <TourStep>[
     optional: true,
   ),
   const TourStep(
+    'מתכון חדש',
+    'מקישור לאתר או לסרטון, מטקסט שמדביקים, או מצילום של מתכון. התרגום '
+        'לעברית מגיע לבד.',
+    target: 'home.add',
+    since: ['5.1.0'],
+  ),
+  const TourStep(
+    'התקבל מחברים',
+    'מתכונים וספרים שחברים שלחו לכם. שומרים בספר, או מוותרים.',
+    target: 'home.inbox',
+    since: ['5.1.0'],
+  ),
+  const TourStep(
     'הגדרות',
-    'כאן מחליפים ספר (מי שבכמה בתים), בודקים עדכונים, מפעילים את הסיור שוב '
-        'ושולחים דיווח על בעיה.',
+    'כאן מזמינים חברים, מחברים את המסך במטבח ובוחרים את היומנים שלו, מחליפים '
+        'ספר (מי שבכמה בתים), בודקים עדכונים ושולחים דיווח על בעיה.',
     target: 'settings',
+    since: ['5.1.0'],
   ),
   const TourStep(
     'מתכון',
@@ -136,6 +150,7 @@ final fullTour = <TourStep>[
     target: 'home.first',
     tap: true,
     optional: true,
+    since: ['5.1.0'], // the way to the edit button
   ),
   const TourStep(
     'כמויות',
@@ -166,6 +181,13 @@ final fullTour = <TourStep>[
     'המצרכים, בכמויות שבחרתם, עוברים לאפליקציית המשימות והקניות.',
     target: 'recipe.shopping',
     optional: true,
+  ),
+  const TourStep(
+    'עריכה',
+    'שם, תמונה, תגיות ומחירים של המצרכים. משם גם מוחקים מתכון.',
+    target: 'recipe.edit',
+    optional: true,
+    since: ['5.1.0'],
   ),
   const TourStep(
     'זהו!',

@@ -38,6 +38,7 @@ class _SkeletonListState extends State<SkeletonList>
               color: color, borderRadius: BorderRadius.circular(r)),
         );
     final list = ListView.builder(
+      shrinkWrap: true, // also inside another list
       physics: const NeverScrollableScrollPhysics(),
       itemCount: widget.rows,
       itemBuilder: (_, i) => Padding(

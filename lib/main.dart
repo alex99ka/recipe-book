@@ -17,6 +17,7 @@ import 'core/update.dart';
 import 'core/web_update.dart';
 import 'firebase_options.dart';
 import 'recipes/api.dart';
+import 'recipes/invite.dart';
 import 'ui/gates.dart';
 import 'ui/theme.dart';
 
@@ -48,6 +49,7 @@ Future<void> main() async {
   await AppInfo.load();
   await SettingsStore.instance.load();
   await Api.loadBook();
+  listenForInvites();
 
   // A throw before runApp is an invisible process on Windows (no window at
   // all), so startup failures become a screen with a code instead.
@@ -106,6 +108,8 @@ class _AppState extends State<App> {
         supportedLocales: const [Locale('he')],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         home: widget.home,
+        // Links are handled in place (recipes/invite.dart), not as routes.
+        initialRoute: '/',
         // The walkthrough over every screen, the fingerprint lock over that.
         builder: (context, screens) => AppLock(
           signedIn: () {

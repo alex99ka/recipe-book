@@ -6,6 +6,7 @@ import '../core/auth.dart';
 import '../core/remote_config.dart';
 import '../core/update.dart';
 import '../core/web_update.dart';
+import '../recipes/invite.dart';
 import 'home_screen.dart';
 import 'sign_in_screen.dart';
 import 'skeleton.dart';
@@ -53,9 +54,33 @@ class _AccessGate extends StatefulWidget {
 }
 
 class _AccessGateState extends State<_AccessGate> {
-  late final Future<bool> _allowed = _check();
+  late Future<bool> _allowed = _check();
+
+  @override
+  void initState() {
+    super.initState();
+    pendingInvite.addListener(_onInvite);
+  }
+
+  @override
+  void dispose() {
+    pendingInvite.removeListener(_onInvite);
+    super.dispose();
+  }
+
+  /// A link opened while the app runs: accept it, then ask /me again (it
+  /// may be what lets this account in).
+  void _onInvite() {
+    if (pendingInvite.value != null) setState(() => _allowed = _check());
+  }
 
   Future<bool> _check() async {
+    // First: an invite is what lets a newcomer in.
+    final said = await acceptPendingInvite();
+    if (said != null && mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(duration: const Duration(seconds: 8), content: Text(said)));
+    }
     try {
       final ok = await RemoteConfig.instance.checkAccess(widget.email);
       await rememberAccess(ok);

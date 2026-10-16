@@ -36,8 +36,11 @@ class NetImage extends StatelessWidget {
 }
 
 class RecipeTile extends StatelessWidget {
-  const RecipeTile(this.r, {super.key});
+  const RecipeTile(this.r, {super.key, this.onBack});
   final Summary r;
+
+  /// After the recipe closes: it may have been edited or deleted.
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) => ListTile(
@@ -49,7 +52,8 @@ class RecipeTile extends StatelessWidget {
         subtitle: r.tags.isEmpty ? null : Text(r.tags.join(' · ')),
         trailing: r.rating == null ? null : Text('★ ${pretty1(r.rating!)}'),
         onTap: () => Navigator.push(
-            context, MaterialPageRoute<void>(builder: (_) => RecipeScreen(r.id, title: r.title))),
+                context, MaterialPageRoute<void>(builder: (_) => RecipeScreen(r.id, title: r.title)))
+            .then((_) => onBack?.call()),
       );
 }
 
@@ -73,9 +77,10 @@ class LoadError extends StatelessWidget {
       );
 }
 
-/// "ספר מתכונים חדש": the title, or null when cancelled.
-Future<String?> askTitle(BuildContext context, String header) async {
-  final c = TextEditingController();
+/// A cookbook's title ("ספר מתכונים חדש", or renaming one), or null when cancelled.
+Future<String?> askTitle(BuildContext context, String header,
+    {String initial = '', String ok = 'יצירה'}) async {
+  final c = TextEditingController(text: initial);
   final title = await showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -89,7 +94,7 @@ Future<String?> askTitle(BuildContext context, String header) async {
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('ביטול')),
-        FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: const Text('יצירה')),
+        FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: Text(ok)),
       ],
     ),
   );

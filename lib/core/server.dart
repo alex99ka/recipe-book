@@ -18,17 +18,40 @@ Future<dynamic> server(
   String method,
   String path, [
   Object? body,
+  Duration timeout = const Duration(seconds: 30),
 ]) async {
-  final token = await FirebaseAuth.instance.currentUser?.getIdToken();
   final req = http.Request(method, Uri.parse('${AppConfig.serverUrl}$path'))
-    ..headers.addAll(serverHeaders)
     ..headers['Content-Type'] = 'application/json';
-  if (token != null) req.headers['Authorization'] = 'Bearer $token';
   if (body != null) req.body = jsonEncode(body);
+  return _send(req, timeout: timeout);
+}
+
+/// Reading a photo, a PDF or a cooking video takes the server up to two minutes.
+const slowCall = Duration(seconds: 150);
+
+/// A multipart upload (photos, PDFs): [files] by field name, as bytes with
+/// their file name; [fields] as plain form values.
+Future<dynamic> serverUpload(
+  String method,
+  String path, {
+  required Map<String, (List<int>, String)> files,
+  Map<String, String> fields = const {},
+}) async {
+  final req = http.MultipartRequest(method, Uri.parse('${AppConfig.serverUrl}$path'))
+    ..fields.addAll(fields);
+  for (final MapEntry(key: field, value: (bytes, name)) in files.entries) {
+    req.files.add(http.MultipartFile.fromBytes(field, bytes, filename: name));
+  }
+  return _send(req, timeout: slowCall);
+}
+
+Future<dynamic> _send(http.BaseRequest req, {required Duration timeout}) async {
+  final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+  req.headers.addAll(serverHeaders);
+  if (token != null) req.headers['Authorization'] = 'Bearer $token';
   final http.Response res;
   try {
-    res = await http.Response.fromStream(
-        await req.send().timeout(const Duration(seconds: 30)));
+    res = await http.Response.fromStream(await req.send().timeout(timeout));
   } on http.ClientException {
     throw Errors.noConnection; // the web's (and a refused socket's) failure
   }

@@ -11,14 +11,16 @@ import '../core/tour.dart';
 import '../core/update.dart';
 import '../core/web_update.dart';
 import '../recipes/api.dart';
+import 'add_recipe_screen.dart';
 import 'cookbook_screen.dart';
+import 'inbox_screen.dart';
 import 'recipe_widgets.dart';
 import 'settings_page.dart';
 import 'skeleton.dart';
 import 'update_banner.dart';
 
-/// Search, the book's own cookbooks, the scanned cookbooks, and what was
-/// added lately (the Ionic app's home, minus adding: that's 5.1.0).
+/// Search, the book's own cookbooks, the scanned cookbooks, what was added
+/// lately, and the way to add a recipe or open what friends sent.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -47,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _lifecycle = AppLifecycleListener(onResume: () {
       _checkUpdates();
       RemoteConfig.instance.listen();
+      RemoteConfig.instance.checkAccess(null).ignore(); // the inbox badge
     });
     _load().then((_) => _afterFirstLoad());
   }
@@ -185,6 +188,23 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           TourTarget(
+            'home.inbox',
+            child: ListenableBuilder(
+              listenable: RemoteConfig.instance,
+              builder: (context, _) => IconButton(
+                tooltip: Api.inboxCount == 0 ? 'התקבל מחברים' : 'התקבל מחברים: ${Api.inboxCount}',
+                icon: Badge(
+                  isLabelVisible: Api.inboxCount > 0,
+                  label: Text('${Api.inboxCount}'),
+                  child: const Icon(Icons.inbox_outlined),
+                ),
+                onPressed: () => Navigator.push(
+                        context, MaterialPageRoute<void>(builder: (_) => const InboxScreen()))
+                    .then((_) => _load()), // kept copies are in the book now
+              ),
+            ),
+          ),
+          TourTarget(
             'settings',
             child: IconButton(
               tooltip: 'הגדרות',
@@ -195,6 +215,16 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: TourTarget(
+        'home.add',
+        child: FloatingActionButton.extended(
+          onPressed: () => Navigator.push(
+                  context, MaterialPageRoute<void>(builder: (_) => const AddRecipeScreen()))
+              .then((_) => _load()),
+          icon: const Icon(Icons.add),
+          label: const Text('מתכון חדש'),
+        ),
       ),
       body: Column(children: [
         const UpdateBanner(),
@@ -236,8 +266,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 textAlign: TextAlign.center),
                           ),
                         for (final (i, r) in shown.indexed)
-                          i == 0 ? TourTarget('home.first', child: RecipeTile(r)) : RecipeTile(r),
-                        const SizedBox(height: 24),
+                          i == 0
+                              ? TourTarget('home.first', child: RecipeTile(r, onBack: _load))
+                              : RecipeTile(r, onBack: _load),
+                        const SizedBox(height: 88), // clear of the add button
                       ]),
                     ),
         ),
