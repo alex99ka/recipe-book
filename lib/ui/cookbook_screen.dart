@@ -6,6 +6,25 @@ import 'recipe_widgets.dart';
 import 'send_dialog.dart';
 import 'skeleton.dart';
 
+/// Opens a cookbook. A delete chosen inside happens here, behind the undo
+/// toast: [hidden] hides or shows it again in the caller's list, [after] then
+/// refreshes that list.
+Future<void> openCookbook(BuildContext context, Shelf s,
+    {void Function(bool hidden)? hidden, VoidCallback? after}) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final r = await Navigator.push<String>(
+      context, MaterialPageRoute(builder: (_) => CookbookScreen(s)));
+  if (r == 'delete') {
+    await deleteWithUndo(messenger,
+        said: 'הספר „${s.title}” נמחק. המתכונים שבו נשארו.',
+        hide: () => hidden?.call(true),
+        restore: () => hidden?.call(false),
+        delete: () => Api.deleteCollection(s.id!),
+        failed: 'הספר לא נמחק');
+  }
+  after?.call();
+}
+
 /// One cookbook's recipes: a scanned one in page order, or one of the book's
 /// own in the order added, which can be renamed, sent to a friend or deleted.
 class CookbookScreen extends StatefulWidget {
@@ -53,26 +72,8 @@ class _CookbookScreenState extends State<CookbookScreen> {
     }
   }
 
-  Future<void> _delete() async {
-    final yes = await showDialog<bool>(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: Text('למחוק את הספר „$_title”?'),
-        content: const Text('רק הספר נמחק. המתכונים שבו נשארים בספר המתכונים.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('ביטול')),
-          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('מחיקה')),
-        ],
-      ),
-    );
-    if (yes != true) return;
-    try {
-      await Api.deleteCollection(widget.shelf.id!);
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      showError(_messenger, e, 'הספר לא נמחק');
-    }
-  }
+  /// The opener deletes it, behind an undo toast (see [openCookbook]).
+  void _delete() => Navigator.pop(context, 'delete');
 
   @override
   Widget build(BuildContext context) {

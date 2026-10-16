@@ -37,13 +37,13 @@ class _InboxScreenState extends State<InboxScreen> {
   }
 
   void _open(InboxItem i) {
-    final Widget? screen = i.collectionId != null
-        ? CookbookScreen(Shelf({'id': i.collectionId, 'title': i.title, 'count': i.count}))
-        : i.recipeId != null
-            ? RecipeScreen(i.recipeId!, title: i.title)
-            : null;
-    if (screen != null) {
-      Navigator.push(context, MaterialPageRoute<void>(builder: (_) => screen)).then((_) => _load());
+    if (i.collectionId != null) {
+      openCookbook(context, Shelf({'id': i.collectionId, 'title': i.title, 'count': i.count}),
+          after: _load);
+    } else if (i.recipeId != null) {
+      Navigator.push(context,
+              MaterialPageRoute<void>(builder: (_) => RecipeScreen(i.recipeId!, title: i.title)))
+          .then((_) => _load());
     }
   }
 

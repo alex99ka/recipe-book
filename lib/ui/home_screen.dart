@@ -134,9 +134,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _open(Shelf s) => Navigator.push(
-          context, MaterialPageRoute<void>(builder: (_) => CookbookScreen(s)))
-      .then((_) => _load()); // its recipes may have moved
+  /// Deleted cookbooks, waiting out the undo toast.
+  final _hiddenShelves = <int>{};
+
+  void _open(Shelf s) => openCookbook(context, s,
+      hidden: (h) {
+        if (mounted) setState(() => h ? _hiddenShelves.add(s.id!) : _hiddenShelves.remove(s.id));
+      },
+      after: _load); // its recipes may have moved
 
   @override
   Widget build(BuildContext context) {
@@ -255,6 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             'home.mine',
                             child: _ShelfRow([
                               for (final c in _collections)
+                                if (!_hiddenShelves.contains(c.id))
                                 _ShelfCard(c, icon: Icons.menu_book_outlined, onTap: () => _open(c)),
                               _ShelfCard(null, icon: Icons.add, label: 'ספר חדש', onTap: _newCollection),
                             ]),

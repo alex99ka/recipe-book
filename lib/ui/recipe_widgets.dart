@@ -100,3 +100,33 @@ Future<String?> askTitle(BuildContext context, String header,
   );
   return title?.trim().isEmpty ?? true ? null : title!.trim();
 }
+
+/// A delete that can be taken back: [hide] at once, a 5-second toast with
+/// "ביטול", and [delete] on the server only when the toast goes unanswered.
+/// shortcut: an app killed within those 5 seconds keeps the item; fine for comments and cookbooks.
+Future<void> deleteWithUndo(
+  ScaffoldMessengerState messenger, {
+  required String said,
+  required VoidCallback hide,
+  required VoidCallback restore,
+  required Future<void> Function() delete,
+  required String failed,
+}) async {
+  hide();
+  messenger.hideCurrentSnackBar();
+  final closed = await messenger
+      .showSnackBar(SnackBar(
+        duration: const Duration(seconds: 5),
+        persist: false, // with an action it would otherwise wait for a tap forever
+        content: Text(said),
+        action: SnackBarAction(label: 'ביטול', onPressed: () {}),
+      ))
+      .closed;
+  if (closed == SnackBarClosedReason.action) return restore();
+  try {
+    await delete();
+  } catch (e) {
+    restore();
+    showError(messenger, e, failed);
+  }
+}

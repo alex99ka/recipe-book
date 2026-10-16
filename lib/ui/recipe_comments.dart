@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/errors.dart';
 import '../recipes/api.dart';
+import 'recipe_widgets.dart';
 
 /// Comments at the bottom of a recipe: the book's own, and on an original,
 /// one conversation per friend it was sent to.
@@ -15,6 +16,9 @@ class RecipeComments extends StatefulWidget {
 
 class RecipeCommentsState extends State<RecipeComments> {
   Comments? _data;
+
+  /// Deleted, waiting out the undo toast.
+  final _hidden = <int>{};
 
   /// Unsent text per conversation: '' is the recipe's own, otherwise a copy id.
   final _drafts = <String, TextEditingController>{};
@@ -58,24 +62,16 @@ class RecipeCommentsState extends State<RecipeComments> {
   }
 
   Future<void> _remove(Comment c) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final yes = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('למחוק את התגובה?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('ביטול')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('מחיקה')),
-        ],
-      ),
-    );
-    if (yes != true) return;
-    try {
-      await Api.deleteComment(c.id);
-      await load();
-    } catch (e) {
-      showError(messenger, e, 'התגובה לא נמחקה');
+    void shown(bool hidden) {
+      if (mounted) setState(() => hidden ? _hidden.add(c.id) : _hidden.remove(c.id));
     }
+
+    await deleteWithUndo(ScaffoldMessenger.of(context),
+        said: 'התגובה נמחקה',
+        hide: () => shown(true),
+        restore: () => shown(false),
+        delete: () => Api.deleteComment(c.id),
+        failed: 'התגובה לא נמחקה');
   }
 
   @override
@@ -109,6 +105,7 @@ class RecipeCommentsState extends State<RecipeComments> {
       ? [_hint(empty, muted)]
       : [
           for (final c in comments)
+            if (!_hidden.contains(c.id))
             ListTile(
               title: Text('${c.author} · ${_when(c.createdAt)}', style: muted),
               subtitle: Text(c.body),
