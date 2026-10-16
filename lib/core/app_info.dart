@@ -2,6 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 /// This build's version, read once at startup.
+/// 16.10.2026 14:05, in local time: how dates read in the app.
+String shortDateTime(DateTime t) {
+  final l = t.toLocal();
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${l.day}.${l.month}.${l.year} ${two(l.hour)}:${two(l.minute)}';
+}
+
 abstract final class AppInfo {
   static String version = '0.0.0';
   static String build = '0';

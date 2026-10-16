@@ -263,7 +263,10 @@ class _SettingsPageState extends State<SettingsPage> {
         ListTile(
           leading: const Icon(Icons.account_circle_outlined),
           title: Text(user?.displayName ?? ''),
-          subtitle: Text(user?.email ?? ''),
+          subtitle: Text([
+            user?.email ?? '',
+            if (user?.metadata.lastSignInTime case final t?) 'כניסה אחרונה: ${shortDateTime(t)}',
+          ].join('\n')),
         ),
         ListTile(
           leading: const Icon(Icons.switch_account_outlined),

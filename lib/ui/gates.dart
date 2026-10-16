@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../core/app_info.dart';
 import '../core/auth.dart';
+import '../core/errors.dart';
 import '../core/remote_config.dart';
 import '../core/update.dart';
 import '../core/web_update.dart';
@@ -86,7 +87,13 @@ class _AccessGateState extends State<_AccessGate> {
       await rememberAccess(ok);
       AppUpdater.instance?.early = RemoteConfig.instance.earlyUser;
       return ok;
-    } catch (_) {
+    } catch (e) {
+      if (e is ServerException && e.status == 401) {
+        // The server no longer takes this session (revoked, account disabled):
+        // back to the sign-in screen, never a stuck app where every call fails.
+        await Auth.signOut();
+        return false;
+      }
       // Offline: whoever was let in before stays in.
       return await lastKnownAccess() ?? false;
     }

@@ -60,7 +60,10 @@ String mimeOf(String fileName) => switch (fileName.split('.').last.toLowerCase()
     };
 
 Future<dynamic> _send(http.BaseRequest req, {required Duration timeout}) async {
-  final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+  // Refreshing the token is a call to Google too: it gets a deadline like any other.
+  final token = await FirebaseAuth.instance.currentUser
+      ?.getIdToken()
+      .timeout(const Duration(seconds: 20));
   req.headers.addAll(serverHeaders);
   if (token != null) req.headers['Authorization'] = 'Bearer $token';
   final http.Response res;
