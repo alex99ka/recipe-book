@@ -9,6 +9,8 @@ Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app, archived).
 
 ## [Unreleased]
 
+## [5.2.0] - 2026-10-16
+
 ### Added
 - חיפוש לפי תגית: התגיות מופיעות מתחת לחיפוש, ולחיצה על תגית בתוך מתכון מציגה את כל המתכונים שלה.
 
