@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Everything a new app renames. The rest of lib/core is the shared standard
 /// (see the make-an-app skill) and should not need editing per app.
 abstract final class AppConfig {
@@ -25,6 +27,9 @@ abstract final class AppConfig {
       String.fromEnvironment('GOOGLE_DESKTOP_CLIENT_SECRET');
 
   /// This build's release notes (from CHANGELOG, injected by the release
-  /// workflow), for the what's-new walkthrough.
-  static const releaseNotes = String.fromEnvironment('RELEASE_NOTES');
+  /// workflow), for the what's-new walkthrough. Base64, because Flutter's
+  /// compilers reject newlines in a define; malformed = a cut-off last char.
+  static final releaseNotes = utf8.decode(
+      base64.decode(const String.fromEnvironment('RELEASE_NOTES')),
+      allowMalformed: true).trim();
 }

@@ -84,7 +84,7 @@ jobs:
         # (lib/config.dart): an empty --dart-define would override them.
         run: |
           flutter build apk --release --target-platform android-arm64 \
-            --dart-define=RELEASE_NOTES="$(head -c 1500 notes.md)"
+            --dart-define=RELEASE_NOTES="$(head -c 1500 notes.md | base64 -w0)"
       - uses: actions/upload-artifact@v7
         with:
           name: android-debug-signed
@@ -158,7 +158,7 @@ jobs:
           flutter build windows --release \
             --dart-define=GOOGLE_DESKTOP_CLIENT_ID="$GOOGLE_DESKTOP_CLIENT_ID" \
             --dart-define=GOOGLE_DESKTOP_CLIENT_SECRET="$GOOGLE_DESKTOP_CLIENT_SECRET" \
-            --dart-define=RELEASE_NOTES="$(head -c 1500 notes.md)"
+            --dart-define=RELEASE_NOTES="$(head -c 1500 notes.md | base64 -w0)"
           # The VC++ runtime next to the exe: starts on a PC that never installed it.
           for f in msvcp140.dll vcruntime140.dll vcruntime140_1.dll; do
             cp "/c/Windows/System32/$f" build/windows/x64/runner/Release/
@@ -197,7 +197,7 @@ jobs:
           name: notes
       - run: |
           flutter build web --release \
-            --dart-define=RELEASE_NOTES="$(head -c 1500 notes.md)"
+            --dart-define=RELEASE_NOTES="$(head -c 1500 notes.md | base64 -w0)"
       - uses: actions/upload-artifact@v7
         with:
           name: web
