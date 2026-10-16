@@ -6,6 +6,7 @@ import 'package:recipe_book/ui/edit_recipe_screen.dart';
 import 'package:recipe_book/ui/friends_screen.dart';
 import 'package:recipe_book/ui/inbox_screen.dart';
 import 'package:recipe_book/ui/panel_screen.dart';
+import 'package:recipe_book/ui/recipe_widgets.dart';
 import 'package:recipe_book/ui/theme.dart';
 
 /// The new 5.1.0 screens build on a phone-sized RTL screen without layout
@@ -60,6 +61,15 @@ void main() {
     await t.scrollUntilVisible(find.text('מחיקת המתכון'), 200,
         scrollable: find.byType(Scrollable).first);
     expect(find.text('מחיקת המתכון'), findsOneWidget);
+  });
+
+  testWidgets('long-press on a recipe offers open, edit and send', (t) async {
+    await pump(t, Scaffold(body: ListView(children: [RecipeTile(Summary({'id': 'r1', 'title': 'שקשוקה'}))])));
+    await t.longPress(find.text('שקשוקה'));
+    await t.pumpAndSettle();
+    for (final label in ['פתיחה', 'עריכה', 'שליחה לחבר']) {
+      expect(find.text(label), findsOneWidget);
+    }
   });
 
   for (final (name, screen) in [

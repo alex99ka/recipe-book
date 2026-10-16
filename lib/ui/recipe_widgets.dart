@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../core/errors.dart';
 import '../recipes/api.dart';
+import 'edit_recipe_screen.dart';
 import 'recipe_screen.dart';
+import 'send_dialog.dart';
 import 'theme.dart';
 
 /// A signed server image, or a quiet placeholder while it loads or when
@@ -42,8 +44,44 @@ class RecipeTile extends StatelessWidget {
   /// After the recipe closes: it may have been edited or deleted.
   final VoidCallback? onBack;
 
+  void _open(BuildContext context) => Navigator.push(
+          context, MaterialPageRoute<void>(builder: (_) => RecipeScreen(r.id, title: r.title)))
+      .then((_) => onBack?.call());
+
+  Future<void> _edit(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final full = await Api.recipe(r.id);
+      if (!context.mounted) return;
+      await Navigator.push<Object?>(
+          context, MaterialPageRoute(builder: (_) => EditRecipeScreen(full)));
+      onBack?.call();
+    } catch (e) {
+      showError(messenger, e, 'המתכון לא נטען');
+    }
+  }
+
+  /// Long-press: the usual things without opening the recipe first.
+  Future<void> _menu(BuildContext context) async {
+    final pick = await showItemMenu(context, r.title, const [
+      (Icons.open_in_new, 'פתיחה'),
+      (Icons.edit_outlined, 'עריכה'),
+      (Icons.send_outlined, 'שליחה לחבר'),
+    ]);
+    if (!context.mounted) return;
+    switch (pick) {
+      case 0:
+        _open(context);
+      case 1:
+        await _edit(context);
+      case 2:
+        await sendToFriend(context, title: r.title, send: (to, note) => Api.send(r.id, to, note));
+    }
+  }
+
   @override
   Widget build(BuildContext context) => ListTile(
+        onLongPress: () => _menu(context),
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(6),
           child: NetImage(r.image, width: 56, height: 56),
@@ -51,11 +89,27 @@ class RecipeTile extends StatelessWidget {
         title: Text(r.title),
         subtitle: r.tags.isEmpty ? null : Text(r.tags.join(' · ')),
         trailing: r.rating == null ? null : Text('★ ${pretty1(r.rating!)}'),
-        onTap: () => Navigator.push(
-                context, MaterialPageRoute<void>(builder: (_) => RecipeScreen(r.id, title: r.title)))
-            .then((_) => onBack?.call()),
+        onTap: () => _open(context),
       );
 }
+
+/// A long-press menu: a sheet titled [title] with these actions; the index
+/// picked, or null. Every action is also reachable by tapping through.
+Future<int?> showItemMenu(BuildContext context, String title, List<(IconData, String)> items) =>
+    showModalBottomSheet<int>(
+      context: context,
+      builder: (c) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(title,
+                maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(c).textTheme.titleMedium),
+          ),
+          for (final (i, (icon, label)) in items.indexed)
+            ListTile(leading: Icon(icon), title: Text(label), onTap: () => Navigator.pop(c, i)),
+        ]),
+      ),
+    );
 
 /// 4.0 reads as 4, 3.5 stays 3.5.
 String pretty1(double x) => x == x.roundToDouble() ? '${x.round()}' : '$x';

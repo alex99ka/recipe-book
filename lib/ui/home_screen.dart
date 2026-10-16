@@ -14,6 +14,7 @@ import 'add_recipe_screen.dart';
 import 'cookbook_screen.dart';
 import 'inbox_screen.dart';
 import 'recipe_widgets.dart';
+import 'send_dialog.dart';
 import 'settings_page.dart';
 import 'skeleton.dart';
 import 'update_banner.dart';
@@ -136,6 +137,46 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Deleted cookbooks, waiting out the undo toast.
   final _hiddenShelves = <int>{};
+
+  /// Long-press on one of the book's own cookbooks.
+  Future<void> _shelfMenu(Shelf s) async {
+    final pick = await showItemMenu(context, s.title, const [
+      (Icons.open_in_new, 'פתיחה'),
+      (Icons.edit_outlined, 'שינוי שם'),
+      (Icons.send_outlined, 'שליחה לחבר'),
+      (Icons.delete_outline, 'מחיקת הספר'),
+    ]);
+    if (!mounted || pick == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    void hidden(bool h) {
+      if (mounted) setState(() => h ? _hiddenShelves.add(s.id!) : _hiddenShelves.remove(s.id));
+    }
+
+    switch (pick) {
+      case 0:
+        _open(s);
+      case 1:
+        final title = await askTitle(context, 'שם הספר', initial: s.title, ok: 'שמירה');
+        if (title == null || title == s.title) return;
+        try {
+          await Api.renameCollection(s.id!, title);
+          await _load();
+        } catch (e) {
+          showError(messenger, e, 'השם לא נשמר');
+        }
+      case 2:
+        await sendToFriend(context,
+            title: s.title, send: (to, note) => Api.sendCollection(s.id!, to, note));
+      case 3:
+        await deleteWithUndo(messenger,
+            said: 'הספר „${s.title}” נמחק. המתכונים שבו נשארו.',
+            hide: () => hidden(true),
+            restore: () => hidden(false),
+            delete: () => Api.deleteCollection(s.id!),
+            failed: 'הספר לא נמחק');
+        await _load();
+    }
+  }
 
   void _open(Shelf s) => openCookbook(context, s,
       hidden: (h) {
@@ -261,7 +302,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: _ShelfRow([
                               for (final c in _collections)
                                 if (!_hiddenShelves.contains(c.id))
-                                _ShelfCard(c, icon: Icons.menu_book_outlined, onTap: () => _open(c)),
+                                _ShelfCard(c,
+                                    icon: Icons.menu_book_outlined,
+                                    onTap: () => _open(c),
+                                    onLongPress: () => _shelfMenu(c)),
                               _ShelfCard(null, icon: Icons.add, label: 'ספר חדש', onTap: _newCollection),
                             ]),
                           ),
@@ -324,10 +368,12 @@ class _ShelfRow extends StatelessWidget {
 
 /// A cookbook cover with its title and count; [shelf] null is the "ספר חדש" card.
 class _ShelfCard extends StatelessWidget {
-  const _ShelfCard(this.shelf, {required this.icon, required this.onTap, this.label});
+  const _ShelfCard(this.shelf,
+      {required this.icon, required this.onTap, this.onLongPress, this.label});
   final Shelf? shelf;
   final IconData icon;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
   final String? label;
 
   @override
@@ -335,6 +381,7 @@ class _ShelfCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: InkWell(
           onTap: onTap,
+          onLongPress: onLongPress,
           borderRadius: BorderRadius.circular(8),
           child: SizedBox(
             width: 104,
