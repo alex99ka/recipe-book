@@ -12,8 +12,17 @@ import 'skeleton.dart';
 
 /// What the user sees, in order: too old → update; signed out → sign in;
 /// not on the allowlist → no access; otherwise the app.
-class Gates extends StatelessWidget {
+class Gates extends StatefulWidget {
   const Gates({super.key});
+
+  @override
+  State<Gates> createState() => _GatesState();
+}
+
+class _GatesState extends State<Gates> {
+  // Kept, not made per build: a new stream on every rebuild shows the skeleton,
+  // rebuilds the access gate, calls /me, notifies, rebuilds… forever.
+  final _authChanges = FirebaseAuth.instance.authStateChanges();
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
@@ -21,7 +30,7 @@ class Gates extends StatelessWidget {
         builder: (context, _) {
           if (RemoteConfig.instance.tooOld) return const UpdateRequiredScreen();
           return StreamBuilder<User?>(
-            stream: FirebaseAuth.instance.authStateChanges(),
+            stream: _authChanges,
             builder: (context, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
                 return const Scaffold(body: SkeletonList());

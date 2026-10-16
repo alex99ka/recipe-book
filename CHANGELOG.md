@@ -9,6 +9,11 @@ Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app).
 
 ## [Unreleased]
 
+## [5.0.1] - 2026-10-16
+
+### Fixed
+- האפליקציה נתקעה במסך טעינה מהבהב אחרי הכניסה.
+
 ## [5.0.0] - 2026-10-15
 
 ### Added
