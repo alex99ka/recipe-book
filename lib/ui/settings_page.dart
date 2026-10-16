@@ -16,6 +16,7 @@ import '../core/tour.dart';
 import '../core/update.dart';
 import '../core/web_update.dart';
 import '../recipes/api.dart';
+import 'export_dialog.dart';
 import 'friends_screen.dart';
 import 'panel_screen.dart';
 import 'pick.dart';
@@ -254,6 +255,16 @@ class _SettingsPageState extends State<SettingsPage> {
               selected: {SettingsStore.instance.themeMode},
               onSelectionChanged: (s) => SettingsStore.instance.setThemeMode(s.first),
             ),
+          ),
+        ),
+        _Section('נתונים'),
+        TourTarget(
+          'settings.export',
+          child: ListTile(
+            leading: const Icon(Icons.download_outlined),
+            title: const Text('ייצוא הספר'),
+            subtitle: const Text('כל המתכונים והספרים, כקובץ JSON וקובץ CSV לאקסל'),
+            onTap: () => exportBookFiles(context),
           ),
         ),
         _Section('עזרה'),

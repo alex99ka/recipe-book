@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config.dart';
 import '../core/remote_config.dart';
 import '../core/server.dart';
+import 'offline.dart';
 
 /// The recipe server's /api/v1 (cld/server/api.py). The shapes are the JSON
 /// as the server sends it, read through zero-cost extension types.
@@ -175,7 +176,11 @@ abstract final class Api {
       'cookbook': ?cookbook,
       'collection': ?collection?.toString(),
     };
-    final list = await server('GET', Uri(path: '/recipes', queryParameters: query.isEmpty ? null : query).toString()) as List;
+    final path = Uri(path: '/recipes', queryParameters: query.isEmpty ? null : query).toString();
+    // The full list is what the home screen shows: kept for the kitchen offline.
+    final list = (query.isEmpty
+        ? await cached('recipes', () => server('GET', path))
+        : await server('GET', path)) as List;
     return [for (final r in list) Summary(r as Map<String, dynamic>)];
   }
 
@@ -186,13 +191,14 @@ abstract final class Api {
   }
 
   static Future<List<Shelf>> cookbooks() async =>
-      [for (final c in await server('GET', '/cookbooks') as List) Shelf(c as Map<String, dynamic>)];
+      [for (final c in await cached('cookbooks', () => server('GET', '/cookbooks')) as List) Shelf(c as Map<String, dynamic>)];
 
   static Future<List<Shelf>> collections() async =>
-      [for (final c in await server('GET', '/collections') as List) Shelf(c as Map<String, dynamic>)];
+      [for (final c in await cached('collections', () => server('GET', '/collections')) as List) Shelf(c as Map<String, dynamic>)];
 
   static Future<Recipe> recipe(String id) async =>
-      Recipe(await server('GET', '/recipes/${_q(id)}') as Map<String, dynamic>);
+      Recipe(await cached('recipe.$id', () => server('GET', '/recipes/${_q(id)}'), recipe: true)
+          as Map<String, dynamic>);
 
   static Future<Comments> comments(String id) async =>
       Comments(await server('GET', '/recipes/${_q(id)}/comments') as Map<String, dynamic>);

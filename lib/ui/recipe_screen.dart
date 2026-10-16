@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/errors.dart';
 import '../core/tour.dart';
 import '../recipes/api.dart';
+import '../recipes/offline.dart';
 import '../recipes/scaling.dart';
 import 'cookbook_screen.dart';
 import 'edit_recipe_screen.dart';
@@ -188,6 +189,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
               : RefreshIndicator(
                   onRefresh: _load,
                   child: ListView(children: [
+                    const OfflineBanner(),
                     if (r.image != null) NetImage(r.image, height: 260),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),

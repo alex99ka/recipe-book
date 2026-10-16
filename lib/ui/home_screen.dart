@@ -12,6 +12,7 @@ import '../core/tour.dart';
 import '../core/update.dart';
 import '../core/web_update.dart';
 import '../recipes/api.dart';
+import '../recipes/offline.dart';
 import 'add_recipe_screen.dart';
 import 'cookbook_screen.dart';
 import 'inbox_screen.dart';
@@ -284,6 +285,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(children: [
         const UpdateBanner(),
+        const OfflineBanner(),
         Expanded(
           child: _error != null && recipes == null
               ? Center(child: LoadError(_error!, retry: _load))

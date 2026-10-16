@@ -144,7 +144,11 @@ icon really light brown. Light/dark, fingerprint, skeletons and the tour came wi
   recipe, a new version; alert to you when a backup or job fails. Per-type toggles, web push.
 - Needs from you: grant the service account "Firebase Cloud Messaging API Admin" (one command).
 
-### Phase 5: data and offline (5.5.0)
+### Phase 5: data and offline — built 2026-10-16, ships in 5.3.0 (before phase 4, which needs a server deploy)
+Done: export (JSON + CSV with a BOM for Excel) from Settings, built in the app from the API;
+the home lists and the 40 most recently opened recipes cached for reading without a
+connection, with a banner. Recipe photos aren't cached (only what the image cache holds).
+
 - Export (JSON + CSV of recipes, cookbooks, prices) from Settings, offline cache of opened
   recipes for the kitchen, Hebrew user-facing CHANGELOG entries going forward.
 
