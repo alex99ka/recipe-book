@@ -4,27 +4,31 @@ import 'package:flutter/material.dart';
 /// [AppTokens]; test/theme_test.dart fails on any colour not listed here.
 /// A new app replaces these values with its approved palette.
 abstract final class AppTokens {
-  static const seed = Color(0xFF047857);
+  static const seed = Color(0xFFB08463);
 
-  static const lightBg = Color(0xFFF6FAF8);
+  /// Light-mode buttons: the seed's own tone 40 is a saturated chestnut;
+  /// this is the softest brown that keeps white text at 4.5:1.
+  static const lightPrimary = Color(0xFF8F6A48);
+
+  static const lightBg = Color(0xFFFAF6F1);
   static const lightCard = Color(0xFFFFFFFF);
-  static const lightInk = Color(0xFF1F2A26);
-  static const lightMuted = Color(0xFF5B6B65);
+  static const lightInk = Color(0xFF2B231C);
+  static const lightMuted = Color(0xFF6E6157);
 
-  static const darkBg = Color(0xFF111614);
-  static const darkCard = Color(0xFF1B2220);
-  static const darkInk = Color(0xFFE7EFEC);
-  static const darkMuted = Color(0xFF9AAAA4);
+  static const darkBg = Color(0xFF17130F);
+  static const darkCard = Color(0xFF221C17);
+  static const darkInk = Color(0xFFF1EAE2);
+  static const darkMuted = Color(0xFFB3A698);
 
   static const danger = Color(0xFFB42318);
   static const dangerDark = Color(0xFFF97066);
 
   /// Skeleton placeholders.
-  static const skeletonLight = Color(0xFFE4ECE8);
-  static const skeletonDark = Color(0xFF26302D);
+  static const skeletonLight = Color(0xFFEEE5DA);
+  static const skeletonDark = Color(0xFF2E2620);
 
   static const all = <Color>[
-    seed, lightBg, lightCard, lightInk, lightMuted, darkBg, darkCard, darkInk,
+    seed, lightPrimary, lightBg, lightCard, lightInk, lightMuted, darkBg, darkCard, darkInk,
     darkMuted, danger, dangerDark, skeletonLight, skeletonDark,
   ];
 }
@@ -35,6 +39,7 @@ ThemeData appTheme(Brightness brightness) {
     seedColor: AppTokens.seed,
     brightness: brightness,
   ).copyWith(
+    primary: dark ? null : AppTokens.lightPrimary,
     surface: dark ? AppTokens.darkCard : AppTokens.lightCard,
     onSurface: dark ? AppTokens.darkInk : AppTokens.lightInk,
     onSurfaceVariant: dark ? AppTokens.darkMuted : AppTokens.lightMuted,

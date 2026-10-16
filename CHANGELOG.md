@@ -9,6 +9,9 @@ Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app).
 
 ## [Unreleased]
 
+### Changed
+- צבעי האפליקציה והאייקון בחום בהיר.
+
 ## [5.0.1] - 2026-10-16
 
 ### Fixed

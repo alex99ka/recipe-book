@@ -40,19 +40,18 @@ flutter:
       fonts:
         - asset: assets/fonts/Rubik.ttf
 
-# The Ionic app's icon (resources/icon.png there), on the same background
-# @capacitor/assets gave it, so the launcher looks the same after the update.
+# The Ionic app's icon (resources/icon.png there), on the brand light brown.
 flutter_launcher_icons:
   image_path: assets/icon.png
   android: true
-  adaptive_icon_background: "#C25427"
+  adaptive_icon_background: "#B08463"
   adaptive_icon_foreground: assets/icon.png
   min_sdk_android: 24
   web:
     generate: true
     image_path: assets/icon.png
-    background_color: "#C25427"
-    theme_color: "#047857"
+    background_color: "#B08463"
+    theme_color: "#B08463"
   windows:
     generate: true
     image_path: assets/icon.png
