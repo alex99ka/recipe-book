@@ -43,12 +43,13 @@ flutter:
       fonts:
         - asset: assets/fonts/Rubik.ttf
 
-# The Ionic app's icon (resources/icon.png there), on the brand light brown.
+# The Ionic app's book-and-steam art; its orange background repainted in the
+# brand light brown (icon.png), and the book alone for the adaptive icon.
 flutter_launcher_icons:
   image_path: assets/icon.png
   android: true
   adaptive_icon_background: "#B08463"
-  adaptive_icon_foreground: assets/icon.png
+  adaptive_icon_foreground: assets/icon_foreground.png
   min_sdk_android: 24
   web:
     generate: true
@@ -59,3 +60,16 @@ flutter_launcher_icons:
     generate: true
     image_path: assets/icon.png
     icon_size: 256
+
+# The native splash: the cream (or dark) background with the icon, as the app opens.
+flutter_native_splash:
+  color: "#FAF6F1"
+  color_dark: "#17130F"
+  image: assets/icon_foreground.png
+  android_12:
+    color: "#FAF6F1"
+    color_dark: "#17130F"
+    image: assets/icon_foreground.png
+    icon_background_color: "#B08463"
+    icon_background_color_dark: "#B08463"
+  web: false
