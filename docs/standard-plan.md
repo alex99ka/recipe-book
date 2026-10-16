@@ -128,7 +128,11 @@ went out as tag search + staying signed in (fingerprint only to sign back in).
 - "אין גישה" screen for uninvited accounts, switch account, last sign-in, version on the
   sign-in screen, timeouts on every call, the full Settings set, security note.
 
-### Phase 3: UI standard (5.3.0)
+### Phase 3: UI standard — built 2026-10-16, ships in 5.3.0
+Done: undo toasts (comments, own cookbooks), long-press menus, two home widgets (newest
+recipes, new recipe), share target (link/video/photo/PDF → new recipe), native splash, the
+icon really light brown. Light/dark, fingerprint, skeletons and the tour came with 5.0.0.
+
 - Light + dark from one tokens file, fingerprint opt-in, skeleton loaders, undo toasts
   (cookbook and comment deletes; recipe delete stays a confirm), long-press menus,
   what's-new tour, native splash.
