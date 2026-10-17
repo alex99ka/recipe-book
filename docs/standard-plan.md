@@ -154,7 +154,7 @@ push (backup.py already alerts on Telegram).
 ### Phase 5: data and offline — shipped in 5.3.0 (prerelease 2026-10-16)
 Done: export (JSON + CSV with a BOM for Excel) from Settings, built in the app from the API;
 the home lists and the 40 most recently opened recipes cached for reading without a
-connection, with a banner. Recipe photos aren't cached (only what the image cache holds).
+connection, with a banner. Recipe photos are kept on disk on Android and Windows, up to 300 MB (lib/core/photo_cache.dart); the web uses the browser's cache.
 
 - Export (JSON + CSV of recipes, cookbooks, prices) from Settings, offline cache of opened
   recipes for the kitchen, Hebrew user-facing CHANGELOG entries going forward.

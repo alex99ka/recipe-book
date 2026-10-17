@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../core/errors.dart';
+import '../core/photo_cache.dart';
 import '../recipes/api.dart';
 import 'edit_recipe_screen.dart';
 import 'recipe_screen.dart';
@@ -28,7 +30,8 @@ class NetImage extends StatelessWidget {
       child: Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant),
     );
     if (url == null) return blank;
-    return Image.network(url,
+    return Image(
+        image: kIsWeb ? NetworkImage(url) : CachedPhoto(url),
         width: width,
         height: height,
         fit: BoxFit.cover,
