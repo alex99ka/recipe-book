@@ -333,6 +333,17 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         ),
+        if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
+          ListenableBuilder(
+            listenable: SettingsStore.instance,
+            builder: (context, _) => SwitchListTile(
+              secondary: const Icon(Icons.screen_rotation_outlined),
+              title: const Text('סיבוב אוטומטי למסך רחב'),
+              subtitle: const Text('כבוי: המסך נשאר לאורך גם כשמסובבים את הטלפון או הטאבלט'),
+              value: SettingsStore.instance.rotate,
+              onChanged: SettingsStore.instance.setRotate,
+            ),
+          ),
         _Section('נתונים'),
         TourTarget(
           'settings.export',

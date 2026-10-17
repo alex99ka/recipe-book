@@ -174,6 +174,138 @@ class _RecipeScreenState extends State<RecipeScreen> {
     final r = _r;
     final text = Theme.of(context).textTheme;
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    // Wide (a tablet, or a phone on its side): the steps beside the ingredients.
+    final wide = MediaQuery.sizeOf(context).width >= 720;
+    final head = r == null
+        ? const <Widget>[]
+        : <Widget>[
+          Text(r.title, style: text.headlineSmall),
+          TourTarget('recipe.stars', child: _Stars(r.rating, onTap: _rate)),
+          if (isTikTok(r.sourceUrl))
+            FilledButton.tonalIcon(
+              icon: const Icon(Icons.play_circle_outline),
+              label: const Text('לסרטון בטיקטוק'),
+              onPressed: () => launchUrl(Uri.parse(r.sourceUrl),
+                  mode: LaunchMode.externalApplication),
+            ),
+          if (r.servings.isNotEmpty || r.totalTime.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                  [if (r.servings.isNotEmpty) '${r.servings} מנות', if (r.totalTime.isNotEmpty) r.totalTime]
+                      .join(' · '),
+                  style: TextStyle(color: muted)),
+            ),
+          if (r.translating || !r.translated)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text('התרגום לעברית בדרך. משכו למטה לרענון בעוד דקה.',
+                  style: TextStyle(color: muted)),
+            ),
+          ];
+    final ingredients = r == null
+        ? const <Widget>[]
+        : <Widget>[
+          const SizedBox(height: 16),
+          Text('מצרכים', style: text.titleMedium),
+          const SizedBox(height: 8),
+          TourTarget(
+            'recipe.scale',
+            child: SegmentedButton<int>(
+              segments: [
+                for (final f in [1, 2, 3]) ButtonSegment(value: f, label: Text('×$f')),
+              ],
+              selected: {_factor},
+              onSelectionChanged: (s) => setState(() => _factor = s.first),
+            ),
+          ),
+          if (_factor != 1)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text('הכמויות הוכפלו. זמני הבישול לא משתנים.',
+                  style: TextStyle(color: muted)),
+            ),
+          const SizedBox(height: 8),
+          for (final (i, p) in r.prices.indexed)
+            _Bullet(_lines[i],
+                note: r.cost == null
+                    ? null
+                    : p.was != null
+                        ? 'מחיר לבדיקה'
+                        : p.price == null
+                            ? 'בלי מחיר'
+                            : null),
+          if (r.cost case final c?) _CostBox(c, factor: _factor),
+          const SizedBox(height: 16),
+          TourTarget(
+            'recipe.book',
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.bookmark_border),
+              label: Text('הוספה לספר${switch (r.collections.length) {
+                0 => '',
+                1 => ' · בספר אחד',
+                final n => ' · ב־$n ספרים',
+              }}'),
+              onPressed: _fileInBooks,
+            ),
+          ),
+          TourTarget(
+            'recipe.send',
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.send_outlined),
+              label: const Text('שליחה לחבר'),
+              onPressed: _send,
+            ),
+          ),
+          TourTarget(
+            'recipe.shopping',
+            child: OutlinedButton.icon(
+              icon: _shopping
+                  ? const SizedBox.square(
+                      dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.shopping_cart_outlined),
+              label: const Text('הוספה לרשימת הקניות'),
+              onPressed: _shopping ? null : _shoppingList,
+            ),
+          ),
+          ];
+    final rest = r == null
+        ? const <Widget>[]
+        : <Widget>[
+          if (r.steps.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text('אופן ההכנה', style: text.titleMedium),
+            const SizedBox(height: 8),
+            for (final (i, s) in r.steps.indexed) _Bullet(s, number: i + 1),
+          ],
+          if (r.allTags.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text('תגיות', style: text.titleMedium),
+            const SizedBox(height: 8),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final t in r.allTags)
+                ActionChip(
+                  label: Text(t),
+                  tooltip: 'כל המתכונים עם $t',
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                          builder: (_) =>
+                              CookbookScreen(Shelf({'title': t}), tag: t))),
+                ),
+            ]),
+          ],
+          if (r.sourceUrl.isNotEmpty && !isTikTok(r.sourceUrl))
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton.icon(
+                icon: const Icon(Icons.link),
+                label: const Text('למקור'),
+                onPressed: () => launchUrl(Uri.parse(r.sourceUrl),
+                    mode: LaunchMode.externalApplication),
+              ),
+            ),
+          ];
     return Scaffold(
       appBar: AppBar(title: Text(r?.title ?? widget.title), actions: [
         if (r != null)
@@ -190,130 +322,31 @@ class _RecipeScreenState extends State<RecipeScreen> {
                   onRefresh: _load,
                   child: ListView(children: [
                     const OfflineBanner(),
-                    if (r.image != null) NetImage(r.image, height: 260),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                        Text(r.title, style: text.headlineSmall),
-                        TourTarget('recipe.stars', child: _Stars(r.rating, onTap: _rate)),
-                        if (isTikTok(r.sourceUrl))
-                          FilledButton.tonalIcon(
-                            icon: const Icon(Icons.play_circle_outline),
-                            label: const Text('לסרטון בטיקטוק'),
-                            onPressed: () => launchUrl(Uri.parse(r.sourceUrl),
-                                mode: LaunchMode.externalApplication),
+                    if (wide)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Expanded(
+                            child: _column([
+                              if (r.image != null)
+                                ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: NetImage(r.image, height: 220)),
+                              ...head,
+                              ...ingredients,
+                            ]),
                           ),
-                        if (r.servings.isNotEmpty || r.totalTime.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                                [if (r.servings.isNotEmpty) '${r.servings} מנות', if (r.totalTime.isNotEmpty) r.totalTime]
-                                    .join(' · '),
-                                style: TextStyle(color: muted)),
-                          ),
-                        if (r.translating || !r.translated)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Text('התרגום לעברית בדרך. משכו למטה לרענון בעוד דקה.',
-                                style: TextStyle(color: muted)),
-                          ),
-                        const SizedBox(height: 16),
-                        Text('מצרכים', style: text.titleMedium),
-                        const SizedBox(height: 8),
-                        TourTarget(
-                          'recipe.scale',
-                          child: SegmentedButton<int>(
-                            segments: [
-                              for (final f in [1, 2, 3]) ButtonSegment(value: f, label: Text('×$f')),
-                            ],
-                            selected: {_factor},
-                            onSelectionChanged: (s) => setState(() => _factor = s.first),
-                          ),
-                        ),
-                        if (_factor != 1)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text('הכמויות הוכפלו. זמני הבישול לא משתנים.',
-                                style: TextStyle(color: muted)),
-                          ),
-                        const SizedBox(height: 8),
-                        for (final (i, p) in r.prices.indexed)
-                          _Bullet(_lines[i],
-                              note: r.cost == null
-                                  ? null
-                                  : p.was != null
-                                      ? 'מחיר לבדיקה'
-                                      : p.price == null
-                                          ? 'בלי מחיר'
-                                          : null),
-                        if (r.cost case final c?) _CostBox(c, factor: _factor),
-                        const SizedBox(height: 16),
-                        TourTarget(
-                          'recipe.book',
-                          child: OutlinedButton.icon(
-                            icon: const Icon(Icons.bookmark_border),
-                            label: Text('הוספה לספר${switch (r.collections.length) {
-                              0 => '',
-                              1 => ' · בספר אחד',
-                              final n => ' · ב־$n ספרים',
-                            }}'),
-                            onPressed: _fileInBooks,
-                          ),
-                        ),
-                        TourTarget(
-                          'recipe.send',
-                          child: OutlinedButton.icon(
-                            icon: const Icon(Icons.send_outlined),
-                            label: const Text('שליחה לחבר'),
-                            onPressed: _send,
-                          ),
-                        ),
-                        TourTarget(
-                          'recipe.shopping',
-                          child: OutlinedButton.icon(
-                            icon: _shopping
-                                ? const SizedBox.square(
-                                    dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                                : const Icon(Icons.shopping_cart_outlined),
-                            label: const Text('הוספה לרשימת הקניות'),
-                            onPressed: _shopping ? null : _shoppingList,
-                          ),
-                        ),
-                        if (r.steps.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          Text('אופן ההכנה', style: text.titleMedium),
-                          const SizedBox(height: 8),
-                          for (final (i, s) in r.steps.indexed) _Bullet(s, number: i + 1),
-                        ],
-                        if (r.allTags.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          Text('תגיות', style: text.titleMedium),
-                          const SizedBox(height: 8),
-                          Wrap(spacing: 8, runSpacing: 8, children: [
-                            for (final t in r.allTags)
-                              ActionChip(
-                                label: Text(t),
-                                tooltip: 'כל המתכונים עם $t',
-                                onPressed: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute<void>(
-                                        builder: (_) =>
-                                            CookbookScreen(Shelf({'title': t}), tag: t))),
-                              ),
-                          ]),
-                        ],
-                        if (r.sourceUrl.isNotEmpty && !isTikTok(r.sourceUrl))
-                          Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: TextButton.icon(
-                              icon: const Icon(Icons.link),
-                              label: const Text('למקור'),
-                              onPressed: () => launchUrl(Uri.parse(r.sourceUrl),
-                                  mode: LaunchMode.externalApplication),
-                            ),
-                          ),
-                      ]),
-                    ),
+                          const SizedBox(width: 24),
+                          Expanded(child: _column(rest)),
+                        ]),
+                      )
+                    else ...[
+                      if (r.image != null) NetImage(r.image, height: 260),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                        child: _column([...head, ...ingredients, ...rest]),
+                      ),
+                    ],
                     RecipeComments(r.id, key: _comments),
                     const SizedBox(height: 32),
                   ]),
@@ -321,6 +354,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
     );
   }
 }
+
+Widget _column(List<Widget> children) =>
+    Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children);
 
 class _Stars extends StatelessWidget {
   const _Stars(this.rating, {required this.onTap});

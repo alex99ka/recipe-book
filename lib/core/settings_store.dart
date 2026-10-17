@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Per-device choices that change how the app looks.
@@ -11,6 +12,9 @@ class SettingsStore extends ChangeNotifier {
   /// Early users only: install prereleases. On until they turn it off.
   bool beta = true;
 
+  /// Off: the screen stays upright even when the phone or tablet is turned.
+  bool rotate = true;
+
   Future<void> load() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -18,6 +22,21 @@ class SettingsStore extends ChangeNotifier {
       themeMode = ThemeMode.values.firstWhere((m) => m.name == v,
           orElse: () => ThemeMode.system);
       beta = prefs.getBool('beta') ?? true;
+      rotate = prefs.getBool('rotate') ?? true;
+    } catch (_) {}
+    _applyRotate();
+  }
+
+  // An empty list lets the system (and its own rotation lock) decide.
+  void _applyRotate() => SystemChrome.setPreferredOrientations(
+      rotate ? const [] : const [DeviceOrientation.portraitUp]).ignore();
+
+  Future<void> setRotate(bool on) async {
+    rotate = on;
+    notifyListeners();
+    _applyRotate();
+    try {
+      await (await SharedPreferences.getInstance()).setBool('rotate', on);
     } catch (_) {}
   }
 

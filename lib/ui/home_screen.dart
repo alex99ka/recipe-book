@@ -254,6 +254,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final recipes = _recipes;
     final shown =
         recipes == null ? null : (_browsing && !_all ? recipes.take(30).toList() : recipes);
+    final cols = MediaQuery.sizeOf(context).width >= 720 ? 2 : 1;
     return Scaffold(
       appBar: AppBar(
         title: _searching
@@ -394,10 +395,19 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Text(_browsing ? 'הספר עוד ריק.' : 'לא נמצא מתכון.',
                                 textAlign: TextAlign.center),
                           ),
-                        for (final (i, r) in shown.indexed)
-                          i == 0
-                              ? TourTarget('home.first', child: RecipeTile(r, onBack: _load))
-                              : RecipeTile(r, onBack: _load),
+                        // Wide (a tablet, or a phone on its side): two recipes a row.
+                        for (var i = 0; i < shown.length; i += cols)
+                          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            for (var j = i; j < i + cols; j++)
+                              Expanded(
+                                child: j >= shown.length
+                                    ? const SizedBox()
+                                    : j == 0
+                                        ? TourTarget('home.first',
+                                            child: RecipeTile(shown[j], onBack: _load))
+                                        : RecipeTile(shown[j], onBack: _load),
+                              ),
+                          ]),
                         if (_browsing && shown.length < recipes!.length)
                           Padding(
                             padding: const EdgeInsets.all(16),
