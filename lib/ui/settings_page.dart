@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../config.dart';
@@ -75,6 +77,20 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!mounted) return;
     setState(() => _fingerprint = r == FingerprintResult.enabled);
     if (r == FingerprintResult.unsupported) _say(errorText(Errors.noBiometrics));
+  }
+
+  /// The site works everywhere; the APK is for Android phones. Where the
+  /// system has no share sheet (some browsers), the text is copied instead.
+  Future<void> _shareApp() async {
+    final text = '${AppConfig.name}\n'
+        'באתר, בכל טלפון, אייפד או מחשב: ${AppConfig.webUrl}\n'
+        'להתקנה באנדרואיד: https://github.com/${AppConfig.githubRepo}/releases/latest';
+    try {
+      await SharePlus.instance.share(ShareParams(text: text));
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: text));
+      _say('הקישורים הועתקו');
+    }
   }
 
   Future<void> _report() async {
@@ -172,6 +188,12 @@ class _SettingsPageState extends State<SettingsPage> {
             onTap: () => Navigator.push(
                 context, MaterialPageRoute<void>(builder: (_) => const FriendsScreen())),
           ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.share_outlined),
+          title: const Text('שיתוף האפליקציה'),
+          subtitle: const Text('קישור לאתר ולהורדה לאנדרואיד. נכנסים רק בהזמנה'),
+          onTap: _shareApp,
         ),
         TourTarget(
           'settings.panel',

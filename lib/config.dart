@@ -9,6 +9,9 @@ abstract final class AppConfig {
   /// Where releases (and so in-app updates) live: owner/repo, public.
   static const githubRepo = 'alex99ka/recipe-book';
 
+  /// The web app (Firebase Hosting): any phone, the iPad, a PC, no install.
+  static const webUrl = 'https://alex-recipe-book.web.app';
+
   /// The recipe server's /api/v1 on the Pi (Tailscale Funnel). It is the
   /// backend: recipes, cookbooks, friends, access, min version, reports.
   static const serverUrl = String.fromEnvironment('SERVER_URL',
