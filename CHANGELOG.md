@@ -9,6 +9,11 @@ Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app, archived).
 
 ## [Unreleased]
 
+## [5.12.1] - 2026-10-17
+
+### Fixed
+- ייצוא מתכון (PDF, טקסט, Markdown) וייצוא הספר נכשלו באנדרואיד ובמחשב עם "שמירת הקבצים נכשלה". עכשיו הקובץ נשמר ונשלח כמו שצריך.
+
 ## [5.12.0] - 2026-10-17
 
 ### Added

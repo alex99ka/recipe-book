@@ -45,27 +45,34 @@ Future<void> exportBookFiles(BuildContext context) async {
   nav.pop();
   final day = DateTime.now().toIso8601String().substring(0, 10);
   final files = [
-    XFile.fromData(utf8.encode(export.json), name: 'recipes-$day.json', mimeType: 'application/json'),
-    XFile.fromData(utf8.encode(export.csv), name: 'recipes-$day.csv', mimeType: 'text/csv'),
+    _named('recipes-$day.json', utf8.encode(export.json), 'application/json'),
+    _named('recipes-$day.csv', utf8.encode(export.csv), 'text/csv'),
   ];
   await _handOver(messenger, files, t('ספר המתכונים'));
 }
 
+/// A file with its name kept beside it: off the web, XFile.fromData drops the
+/// name (its `name` comes from the empty path), and share_plus then writes to
+/// the bare temp folder — "Is a directory".
+(String, XFile) _named(String name, List<int> bytes, String mime) =>
+    (name, XFile.fromData(Uint8List.fromList(bytes), name: name, mimeType: mime));
+
 /// Windows: a folder to save them in. Android and the web: the share sheet
 /// (on the web it downloads them).
-Future<void> _handOver(ScaffoldMessengerState messenger, List<XFile> files, String title) async {
+Future<void> _handOver(
+    ScaffoldMessengerState messenger, List<(String, XFile)> files, String title) async {
   try {
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
       final dir = await getDirectoryPath(confirmButtonText: t('שמירה כאן'));
       if (dir == null) return;
-      for (final f in files) {
-        await f.saveTo('$dir\\${f.name}');
+      for (final (name, f) in files) {
+        await f.saveTo('$dir\\$name');
       }
       messenger.showSnackBar(SnackBar(content: Text(t('נשמר בתיקייה {0}', [dir]))));
     } else {
       await SharePlus.instance.share(ShareParams(
-        files: files,
-        fileNameOverrides: [for (final f in files) f.name],
+        files: [for (final (_, f) in files) f],
+        fileNameOverrides: [for (final (name, _) in files) name],
         title: title,
       ));
     }
@@ -84,19 +91,19 @@ Future<void> exportRecipeFile(BuildContext context, Recipe r, List<String> lines
   ]);
   if (kind == null) return;
   // Hebrew file names are fine on every system; only what breaks paths goes.
-  final name = r.title.replaceAll(RegExp(r'[\\/:*?"<>|]'), ' ').trim();
-  final XFile file;
+  final cleaned = r.title.replaceAll(RegExp(r'[\\/:*?"<>|]'), ' ').trim();
+  final name = cleaned.isEmpty ? 'recipe' : cleaned;
+  final (String, XFile) file;
   try {
     file = switch (kind) {
-      0 => XFile.fromData(
+      0 => _named(
+          '$name.pdf',
           await recipePdf(r, lines,
               font: (await rootBundle.load('assets/fonts/Rubik.ttf')).buffer.asUint8List(),
               photo: await _photo(r)),
-          name: '$name.pdf',
-          mimeType: 'application/pdf'),
-      1 => XFile.fromData(utf8.encode(recipeText(r, lines)), name: '$name.txt', mimeType: 'text/plain'),
-      _ => XFile.fromData(utf8.encode(recipeMarkdown(r, lines)),
-          name: '$name.md', mimeType: 'text/markdown'),
+          'application/pdf'),
+      1 => _named('$name.txt', utf8.encode(recipeText(r, lines)), 'text/plain'),
+      _ => _named('$name.md', utf8.encode(recipeMarkdown(r, lines)), 'text/markdown'),
     };
   } catch (e) {
     showError(messenger, e, t('הייצוא נכשל'));
