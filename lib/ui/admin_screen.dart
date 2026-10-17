@@ -5,6 +5,7 @@ import '../core/errors.dart';
 import '../recipes/api.dart';
 import 'recipe_widgets.dart';
 import 'skeleton.dart';
+import '../core/i18n.dart';
 
 /// The admin's view of every account: who signed in, their books, how many
 /// recipes they made this month, and blocking one. The server lets only the
@@ -41,7 +42,7 @@ class _AdminScreenState extends State<AdminScreen> {
       await Api.setBlocked(u.uid, blocked);
       await _load();
     } catch (e) {
-      showError(messenger, e, 'השינוי לא נשמר');
+      showError(messenger, e, t('השינוי לא נשמר'));
     }
   }
 
@@ -50,7 +51,7 @@ class _AdminScreenState extends State<AdminScreen> {
     final users = _users;
     final muted = TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant);
     return Scaffold(
-      appBar: AppBar(title: Text(users == null ? 'משתמשים' : 'משתמשים (${users.length})')),
+      appBar: AppBar(title: Text(users == null ? t('משתמשים') : t('משתמשים ({0})', [users.length]))),
       body: RefreshIndicator(
         onRefresh: _load,
         child: _error != null && users == null
@@ -69,8 +70,8 @@ class _AdminScreenState extends State<AdminScreen> {
                         subtitle: Text([
                           if (u.name.isNotEmpty && u.email.isNotEmpty) u.email,
                           for (final b in u.books)
-                            '${b['title']}: ${b['recipes']} מתכונים, ${b['createdThisMonth']} חדשים החודש',
-                          'נכנס לאחרונה ${shortDateTime(u.lastSeen)} · מאז ${shortDateTime(u.firstSeen)}',
+                            t('{0}: {1} מתכונים, {2} חדשים החודש', [b['title'], b['recipes'], b['createdThisMonth']]),
+                          t('נכנס לאחרונה {0} · מאז {1}', [shortDateTime(u.lastSeen), shortDateTime(u.firstSeen)]),
                         ].join('\n'), style: muted),
                         isThreeLine: true,
                         trailing: u.admin
@@ -82,7 +83,7 @@ class _AdminScreenState extends State<AdminScreen> {
                       ),
                     Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Text('המתג כבוי = החשבון חסום: כל בקשה שלו נדחית. הספר שלו נשמר.',
+                      child: Text(t('המתג כבוי = החשבון חסום: כל בקשה שלו נדחית. הספר שלו נשמר.'),
                           style: muted),
                     ),
                   ]),

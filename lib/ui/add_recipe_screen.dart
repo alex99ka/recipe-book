@@ -5,6 +5,7 @@ import '../core/share_in.dart';
 import '../recipes/api.dart';
 import 'pick.dart';
 import 'recipe_screen.dart';
+import '../core/i18n.dart';
 
 enum _Mode { link, text, file }
 
@@ -83,7 +84,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       Navigator.pushReplacement(
           context, MaterialPageRoute<void>(builder: (_) => RecipeScreen(id)));
     } catch (e) {
-      if (mounted) setState(() => _error = errorText(e, 'המתכון לא נוסף'));
+      if (mounted) setState(() => _error = errorText(e, t('המתכון לא נוסף')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -98,13 +99,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   Widget build(BuildContext context) {
     final muted = TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant);
     return Scaffold(
-      appBar: AppBar(title: const Text('מתכון חדש')),
+      appBar: AppBar(title: Text(t('מתכון חדש'))),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         SegmentedButton<_Mode>(
-          segments: const [
-            ButtonSegment(value: _Mode.link, label: Text('קישור')),
-            ButtonSegment(value: _Mode.text, label: Text('טקסט')),
-            ButtonSegment(value: _Mode.file, label: Text('צילום או PDF')),
+          segments: [
+            ButtonSegment(value: _Mode.link, label: Text(t('קישור'))),
+            ButtonSegment(value: _Mode.text, label: Text(t('טקסט'))),
+            ButtonSegment(value: _Mode.file, label: Text(t('צילום או PDF'))),
           ],
           selected: {_mode},
           onSelectionChanged: _busy ? null : (s) => setState(() => _mode = s.first),
@@ -117,10 +118,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 enabled: !_busy,
                 keyboardType: TextInputType.url,
                 textDirection: TextDirection.ltr,
-                decoration: const InputDecoration(
-                  labelText: 'קישור',
+                decoration: InputDecoration(
+                  labelText: t('קישור'),
                   hintText: 'https://…',
-                  helperText: 'אתר מתכונים, או סרטון מטיקטוק, אינסטגרם או יוטיוב.',
+                  helperText: t('אתר מתכונים, או סרטון מטיקטוק, אינסטגרם או יוטיוב.'),
                 ),
               ),
             ],
@@ -130,21 +131,21 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 enabled: !_busy,
                 minLines: 8,
                 maxLines: null,
-                decoration: const InputDecoration(
-                  labelText: 'המתכון',
-                  hintText: 'מדביקים כאן מצרכים ואופן הכנה, בכל שפה',
+                decoration: InputDecoration(
+                  labelText: t('המתכון'),
+                  hintText: t('מדביקים כאן מצרכים ואופן הכנה, בכל שפה'),
                   alignLabelWithHint: true,
                 ),
               ),
             ],
           _Mode.file => [
               _FileRow(
-                title: 'צילום של המתכון או קובץ PDF',
+                title: t('צילום של המתכון או קובץ PDF'),
                 picked: _source,
                 onPick: _busy ? null : () => _pick(true),
               ),
               _FileRow(
-                title: 'תמונה של המנה (לא חובה)',
+                title: t('תמונה של המנה (לא חובה)'),
                 picked: _dish,
                 onPick: _busy ? null : () => _pick(false),
               ),
@@ -152,7 +153,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         },
         if (_collections.isNotEmpty) ...[
           const SizedBox(height: 16),
-          Text('להוסיף גם לספרים', style: Theme.of(context).textTheme.titleSmall),
+          Text(t('להוסיף גם לספרים'), style: Theme.of(context).textTheme.titleSmall),
           for (final c in _collections)
             CheckboxListTile(
               title: Text(c.title),
@@ -166,12 +167,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           icon: _busy
               ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
               : const Icon(Icons.add),
-          label: Text(_busy ? 'קורא את המתכון…' : 'הוספה'),
+          label: Text(_busy ? t('קורא את המתכון…') : t('הוספה')),
         ),
         if (_busy)
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Text('סרטון יכול לקחת עד שתי דקות. התרגום לעברית ממשיך אחר כך ברקע.',
+            child: Text(t('סרטון יכול לקחת עד שתי דקות. התרגום לעברית ממשיך אחר כך ברקע.'),
                 style: muted),
           ),
         if (_error.isNotEmpty)
@@ -196,6 +197,6 @@ class _FileRow extends StatelessWidget {
         title: Text(title),
         subtitle: picked == null ? null : Text(picked!.$2, textDirection: TextDirection.ltr),
         trailing: OutlinedButton(
-            onPressed: onPick, child: Text(picked == null ? 'בחירה' : 'החלפה')),
+            onPressed: onPick, child: Text(picked == null ? t('בחירה') : t('החלפה'))),
       );
 }

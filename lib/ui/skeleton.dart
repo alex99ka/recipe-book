@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'theme.dart';
+import '../core/i18n.dart';
 
 /// Placeholder rows shaped like the content while it loads: never a lone
 /// spinner. A soft pulse, still when the system asks for reduced motion.
@@ -61,7 +62,7 @@ class _SkeletonListState extends State<SkeletonList>
       ),
     );
     return Semantics(
-      label: 'טוען…',
+      label: t('טוען…'),
       child: still
           ? list
           : FadeTransition(

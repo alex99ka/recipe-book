@@ -22,6 +22,7 @@ import 'recipes/api.dart';
 import 'recipes/invite.dart';
 import 'ui/gates.dart';
 import 'ui/theme.dart';
+import 'core/i18n.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,11 +38,11 @@ Future<void> main() async {
   if (kReleaseMode) {
     // A broken widget says so in words, not a grey box.
     ErrorWidget.builder = (d) => Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: SettingsStore.instance.lang == 'he' ? TextDirection.rtl : TextDirection.ltr,
           child: Center(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Text(errorText(d.exception, 'המסך הזה לא נטען'),
+              child: Text(errorText(d.exception, t('המסך הזה לא נטען')),
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: AppTokens.danger)),
             ),
@@ -59,7 +60,7 @@ Future<void> main() async {
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)
         .timeout(const Duration(seconds: 20));
-    await FirebaseAuth.instance.setLanguageCode('he');
+    await FirebaseAuth.instance.setLanguageCode(SettingsStore.instance.lang);
     RemoteConfig.instance.listen();
   } catch (e, stack) {
     recordError('X3', e, stack);
@@ -102,13 +103,15 @@ class _AppState extends State<App> {
     return ListenableBuilder(
       listenable: SettingsStore.instance,
       builder: (context, _) => MaterialApp(
-        title: AppConfig.name,
+        // A new language rebuilds every screen, so no word stays in the old one.
+        key: ValueKey(SettingsStore.instance.lang),
+        title: t(AppConfig.name),
         debugShowCheckedModeBanner: false,
         theme: appTheme(Brightness.light),
         darkTheme: appTheme(Brightness.dark),
         themeMode: SettingsStore.instance.themeMode,
-        locale: const Locale('he'),
-        supportedLocales: const [Locale('he')],
+        locale: Locale(SettingsStore.instance.lang),
+        supportedLocales: [for (final l in languages.keys) Locale(l)],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         home: widget.home,
         // Links are handled in place (recipes/invite.dart), not as routes.
@@ -140,7 +143,7 @@ class _StartupError extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              errorText(error, 'האפליקציה לא הצליחה להתחבר בהפעלה'),
+              errorText(error, t('האפליקציה לא הצליחה להתחבר בהפעלה')),
               textAlign: TextAlign.center,
             ),
           ),

@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config.dart';
 import 'app_info.dart';
 import 'errors.dart';
+import 'i18n.dart';
 
 /// A published build for this platform.
 @immutable
@@ -304,15 +305,15 @@ class AppUpdater extends ChangeNotifier {
       final r = await source.latest(platform, early: early);
       available = r != null && isNewer(r.version, currentVersion) ? r : null;
       lastResult = available == null
-          ? 'הגרסה עדכנית'
-          : 'נמצאה גרסה ${available!.version}';
+          ? t('הגרסה עדכנית')
+          : t('נמצאה גרסה {0}', [available!.version]);
       if (available == null) {
         await _clearFolder();
         await installer.unstage();
       }
     } catch (e) {
       error = e is AppError ? e : Errors.updateCheckFailed;
-      lastResult = 'הבדיקה נכשלה (קוד ${error!.code})';
+      lastResult = t('הבדיקה נכשלה (קוד {0})', [error!.code]);
     } finally {
       lastChecked = DateTime.now();
       checking = false;

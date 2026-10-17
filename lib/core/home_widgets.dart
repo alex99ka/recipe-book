@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
+import 'i18n.dart';
 
 /// Android home screen widgets (android/.../HomeWidgets.kt): the newest
 /// recipes, and a "מתכון חדש" button. While the app runs it keeps the list fresh.
@@ -51,7 +52,7 @@ Future<void> pinHomeWidget(BuildContext context) async {
     builder: (c) => SafeArea(
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         for (final e in widgets.entries)
-          ListTile(title: Text(e.value), onTap: () => Navigator.pop(c, e.key)),
+          ListTile(title: Text(t(e.value)), onTap: () => Navigator.pop(c, e.key)),
       ]),
     ),
   );
@@ -62,6 +63,6 @@ Future<void> pinHomeWidget(BuildContext context) async {
       return;
     }
   } catch (_) {}
-  messenger.showSnackBar(const SnackBar(
-      content: Text('לחיצה ארוכה על מסך הבית › וידג׳טים › בוחרים את האפליקציה')));
+  messenger.showSnackBar(SnackBar(
+      content: Text(t('לחיצה ארוכה על מסך הבית › וידג׳טים › בוחרים את האפליקציה'))));
 }

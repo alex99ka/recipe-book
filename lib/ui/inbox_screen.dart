@@ -7,6 +7,7 @@ import 'cookbook_screen.dart';
 import 'recipe_screen.dart';
 import 'recipe_widgets.dart';
 import 'skeleton.dart';
+import '../core/i18n.dart';
 
 /// What friends sent. The copies are already in the book: keep them, or
 /// say no and they're deleted.
@@ -52,13 +53,13 @@ class _InboxScreenState extends State<InboxScreen> {
       final yes = await showDialog<bool>(
         context: context,
         builder: (c) => AlertDialog(
-          title: Text('למחוק את „${i.title}”?'),
+          title: Text(t('למחוק את „{0}”?', [i.title])),
           content: Text(i.collectionId != null
-              ? 'הספר וכל המתכונים שהגיעו איתו יימחקו מהספר שלכם.'
-              : 'המתכון יימחק מהספר שלכם.'),
+              ? t('הספר וכל המתכונים שהגיעו איתו יימחקו מהספר שלכם.')
+              : t('המתכון יימחק מהספר שלכם.')),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('ביטול')),
-            FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('מחיקה')),
+            TextButton(onPressed: () => Navigator.pop(c, false), child: Text(t('ביטול'))),
+            FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(t('מחיקה'))),
           ],
         ),
       );
@@ -70,7 +71,7 @@ class _InboxScreenState extends State<InboxScreen> {
       if (mounted) setState(() => _items = [..._items!.where((x) => x.id != i.id)]);
       RemoteConfig.instance.checkAccess(null).ignore(); // the badge count
     } catch (e) {
-      showError(messenger, e, 'לא נשמר');
+      showError(messenger, e, t('לא נשמר'));
     }
   }
 
@@ -79,7 +80,7 @@ class _InboxScreenState extends State<InboxScreen> {
     final items = _items;
     final muted = TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant);
     return Scaffold(
-      appBar: AppBar(title: const Text('התקבל מחברים')),
+      appBar: AppBar(title: Text(t('התקבל מחברים'))),
       body: _error != null && items == null
           ? Center(child: LoadError(_error!, retry: _load))
           : items == null
@@ -90,7 +91,7 @@ class _InboxScreenState extends State<InboxScreen> {
                     if (items.isEmpty)
                       Padding(
                         padding: const EdgeInsets.all(48),
-                        child: Text('אין כאן כלום כרגע. מה שחברים ישלחו יופיע כאן.',
+                        child: Text(t('אין כאן כלום כרגע. מה שחברים ישלחו יופיע כאן.'),
                             textAlign: TextAlign.center, style: muted),
                       ),
                     for (final i in items)
@@ -100,7 +101,7 @@ class _InboxScreenState extends State<InboxScreen> {
                           ListTile(
                             title: Text(i.title),
                             subtitle: Text([
-                              '${i.collectionId != null ? 'ספר עם ${i.count} מתכונים' : 'מתכון'} · מאת ${i.from}',
+                              t('{0} · מאת {1}', [i.collectionId != null ? t('ספר עם {0} מתכונים', [i.count]) : t('מתכון'), i.from]),
                               if (i.note.isNotEmpty) '„${i.note}”',
                             ].join('\n')),
                             onTap: () => _open(i),
@@ -109,9 +110,9 @@ class _InboxScreenState extends State<InboxScreen> {
                             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                             child: Wrap(spacing: 8, children: [
                               FilledButton(
-                                  onPressed: () => _settle(i, keep: true), child: const Text('שמירה בספר')),
+                                  onPressed: () => _settle(i, keep: true), child: Text(t('שמירה בספר'))),
                               OutlinedButton(
-                                  onPressed: () => _settle(i, keep: false), child: const Text('לא צריך')),
+                                  onPressed: () => _settle(i, keep: false), child: Text(t('לא צריך'))),
                             ]),
                           ),
                         ]),

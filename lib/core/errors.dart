@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_info.dart';
+import 'i18n.dart';
 
 /// Every failure the app shows says what failed, why, and what to do, in
 /// Hebrew, with a code that tells the builder which failure it was.
@@ -124,7 +125,7 @@ AppError classify(Object e) => switch (e) {
       // The recipe server says in Hebrew what was wrong with the request.
       ServerException(status: 400 || 409 || 413 || 422, :final message)
           when message.isNotEmpty =>
-        AppError('S5', message.replaceFirst(RegExp(r'\.$'), ''), 'מתקנים ומנסים שוב'),
+        AppError('S5', message.replaceFirst(RegExp(r'\.$'), ''), t('מתקנים ומנסים שוב')),
       ServerException(status: 502 || 503) => Errors.serverDown,
       ServerException(status: 504) => Errors.tooSlow,
       ServerException() => Errors.serverBug,
@@ -135,16 +136,15 @@ AppError _unexpected(Object e) {
   final detail = '$e';
   return AppError(
     'X1',
-    'תקלה לא צפויה (${detail.length > 100 ? '${detail.substring(0, 100)}…' : detail})',
-    'מנסים שוב. אם זה חוזר, שולחים דיווח מההגדרות',
+    t('תקלה לא צפויה ({0})', [detail.length > 100 ? '${detail.substring(0, 100)}…' : detail]),
+    t('מנסים שוב. אם זה חוזר, שולחים דיווח מההגדרות'),
   );
 }
 
 /// "[failed]: why. What to do. (קוד G1)", for a SnackBar or under a field.
 String errorText(Object e, [String? failed]) {
   final error = classify(e);
-  return '${failed == null ? '' : '$failed: '}${error.why}. ${error.todo}. '
-      '(קוד ${error.code})';
+  return t('{0}{1}. {2}. (קוד {3})', [failed == null ? '' : '$failed: ', t(error.why), t(error.todo), error.code]);
 }
 
 /// A failure in a SnackBar that stays long enough to read. "העתקה" copies the
@@ -158,10 +158,9 @@ void showError(ScaffoldMessengerState messenger, Object e, [String? failed]) {
       duration: const Duration(seconds: 10),
       content: Text(errorText(error, failed)),
       action: SnackBarAction(
-        label: 'העתקה',
+        label: t('העתקה'),
         onPressed: () => Clipboard.setData(ClipboardData(
-          text: 'קוד ${error.code}: ${failed ?? error.why}\nפרטים: $e\n'
-              'גרסה ${AppInfo.versionLabel} · ${DateTime.now().toString().substring(0, 16)}',
+          text: t('קוד {0}: {1}\nפרטים: {2}\nגרסה {3} · {4}', [error.code, failed ?? error.why, e, AppInfo.versionLabel, DateTime.now().toString().substring(0, 16)]),
         )),
       ),
     ),

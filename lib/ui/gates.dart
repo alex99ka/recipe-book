@@ -12,6 +12,7 @@ import '../recipes/invite.dart';
 import 'home_screen.dart';
 import 'sign_in_screen.dart';
 import 'skeleton.dart';
+import '../core/i18n.dart';
 
 /// What the user sees, in order: too old → update; signed out → sign in;
 /// not on the allowlist → no access; otherwise the app.
@@ -122,16 +123,15 @@ class _NoAccessScreen extends StatelessWidget {
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.lock_outline, size: 48),
               const SizedBox(height: 16),
-              Text('לחשבון ${FirebaseAuth.instance.currentUser?.email ?? ''} '
-                  'אין גישה לאפליקציה הזו (קוד A1).',
+              Text(t('לחשבון {0} אין גישה לאפליקציה הזו (קוד A1).', [FirebaseAuth.instance.currentUser?.email ?? '']),
                   textAlign: TextAlign.center),
               const SizedBox(height: 8),
-              const Text('אם זו טעות, מבקשים מהמנהל להוסיף את החשבון.',
+              Text(t('אם זו טעות, מבקשים מהמנהל להוסיף את החשבון.'),
                   textAlign: TextAlign.center),
               const SizedBox(height: 24),
               OutlinedButton(
                 onPressed: Auth.switchAccount,
-                child: const Text('כניסה עם חשבון אחר'),
+                child: Text(t('כניסה עם חשבון אחר')),
               ),
             ]),
           ),
@@ -158,11 +158,11 @@ class UpdateRequiredScreen extends StatelessWidget {
               children: [
                 const Icon(Icons.system_update, size: 48),
                 const SizedBox(height: 16),
-                Text('צריך לעדכן כדי להמשיך (קוד U4)',
+                Text(t('צריך לעדכן כדי להמשיך (קוד U4)'),
                     style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
                 Text(message.isEmpty
-                    ? 'הגרסה ${AppInfo.version} ישנה מדי. הנתונים נשמרים.'
+                    ? t('הגרסה {0} ישנה מדי. הנתונים נשמרים.', [AppInfo.version])
                     : message, textAlign: TextAlign.center),
                 const SizedBox(height: 24),
                 if (updater?.progress != null)
@@ -174,7 +174,7 @@ class UpdateRequiredScreen extends StatelessWidget {
                       if (updater.available == null) await updater.check();
                       await updater.install();
                     },
-                    child: const Text('עדכון עכשיו'),
+                    child: Text(t('עדכון עכשיו')),
                   ),
               ],
             ),

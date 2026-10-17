@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/errors.dart';
 import '../core/update.dart';
 import '../core/web_update.dart';
+import '../core/i18n.dart';
 
 /// Top of the home screen, only when there is something to say: a new web
 /// build (reload), a download in progress, or a build that needs a tap
@@ -19,7 +20,7 @@ class UpdateBanner extends StatelessWidget {
       builder: (context, _) {
         final web = WebUpdate.instance.available;
         if (web != null) {
-          return _bar(context, 'גרסה $web זמינה', 'רענון', WebUpdate.instance.apply);
+          return _bar(context, t('גרסה {0} זמינה', [web]), t('רענון'), WebUpdate.instance.apply);
         }
         if (u == null || u.available == null || u.dismissed) {
           return const SizedBox.shrink();
@@ -33,9 +34,9 @@ class UpdateBanner extends StatelessWidget {
           u.needsPermission
               ? errorText(Errors.updateNotAllowed)
               : u.error != null
-                  ? errorText(u.error!, 'העדכון')
-                  : 'גרסה ${u.available!.version} זמינה',
-          'עדכון',
+                  ? errorText(u.error!, t('העדכון'))
+                  : t('גרסה {0} זמינה', [u.available!.version]),
+          t('עדכון'),
           u.install,
           onLater: u.dismiss,
         );
@@ -54,7 +55,7 @@ class UpdateBanner extends StatelessWidget {
           Icon(Icons.system_update, color: c.onPrimaryContainer),
           const SizedBox(width: 12),
           Expanded(child: Text(text, style: TextStyle(color: c.onPrimaryContainer))),
-          if (onLater != null) TextButton(onPressed: onLater, child: const Text('אחר כך')),
+          if (onLater != null) TextButton(onPressed: onLater, child: Text(t('אחר כך'))),
           FilledButton(onPressed: onTap, child: Text(action)),
         ]),
       ),

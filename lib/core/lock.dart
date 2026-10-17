@@ -7,6 +7,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config.dart';
+import 'i18n.dart';
 
 /// Fingerprint (Windows Hello on the PC) sign-in, opt-in. The app always stays
 /// signed in and never asks on opening: a recipe book isn't that private, and
@@ -77,7 +78,7 @@ Future<FingerprintResult> enableFingerprint() async {
   }
   try {
     final ok = await auth.authenticate(
-      localizedReason: 'אישור כניסה בטביעת אצבע ל${AppConfig.name}',
+      localizedReason: t('אישור כניסה בטביעת אצבע ל{0}', [AppConfig.name]),
       persistAcrossBackgrounding: true,
     );
     if (!ok) return FingerprintResult.cancelled;
@@ -146,7 +147,7 @@ class _AppLockState extends State<AppLock> {
     _asking = true;
     try {
       final ok = await LocalAuthentication().authenticate(
-        localizedReason: 'פתיחת ${AppConfig.name}',
+        localizedReason: t('פתיחת {0}', [AppConfig.name]),
         persistAcrossBackgrounding: true,
       );
       if (ok) {
@@ -177,16 +178,16 @@ class _AppLockState extends State<AppLock> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(AppConfig.name,
+                      Text(t(AppConfig.name),
                           style: Theme.of(context).textTheme.headlineMedium),
                       const SizedBox(height: 40),
                       FilledButton.icon(
                         onPressed: _unlock,
                         icon: const Icon(Icons.fingerprint),
-                        label: const Text('כניסה בטביעת אצבע'),
+                        label: Text(t('כניסה בטביעת אצבע')),
                       ),
                       const SizedBox(height: 12),
-                      TextButton(onPressed: _google, child: const Text('כניסה עם Google')),
+                      TextButton(onPressed: _google, child: Text(t('כניסה עם Google'))),
                     ],
                   ),
                 ),

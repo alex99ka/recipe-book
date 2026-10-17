@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/errors.dart';
 import '../core/server.dart';
+import '../core/i18n.dart';
 
 /// The kitchen without a connection: the last copy of the home lists and of
 /// the recipes opened lately, shown when the network or the home server
@@ -21,7 +22,8 @@ bool _unreachable(Object e) => const {'N1', 'N2', 'S1'}.contains(classify(e).cod
 /// [recipe]: one of the opened recipes, of which the newest [keepRecipes] stay.
 Future<dynamic> cached(String key, Future<dynamic> Function() fetch, {bool recipe = false}) async {
   final prefs = await SharedPreferences.getInstance();
-  final k = 'cache.${serverHeaders['X-Book'] ?? ''}.$key';
+  // Per book and per language: a saved Russian recipe never shows in Hebrew.
+  final k = 'cache.${serverHeaders['X-Book'] ?? ''}${serverHeaders['X-Lang'] ?? ''}.$key';
   try {
     final v = await fetch();
     offline.value = false;
@@ -55,13 +57,13 @@ class OfflineBanner extends StatelessWidget {
             ? const SizedBox.shrink()
             : Material(
                 color: Theme.of(context).colorScheme.secondaryContainer,
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(children: [
                     Icon(Icons.cloud_off, size: 18),
                     SizedBox(width: 8),
                     Expanded(
-                        child: Text('אין חיבור לשרת: מוצג מה שנשמר במכשיר.')),
+                        child: Text(t('אין חיבור לשרת: מוצג מה שנשמר במכשיר.'))),
                   ]),
                 ),
               ),

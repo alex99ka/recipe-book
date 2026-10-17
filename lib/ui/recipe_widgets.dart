@@ -8,6 +8,7 @@ import 'edit_recipe_screen.dart';
 import 'recipe_screen.dart';
 import 'send_dialog.dart';
 import 'theme.dart';
+import '../core/i18n.dart';
 
 /// A signed server image, or a quiet placeholder while it loads or when
 /// there's none.
@@ -60,16 +61,16 @@ class RecipeTile extends StatelessWidget {
           context, MaterialPageRoute(builder: (_) => EditRecipeScreen(full)));
       onBack?.call();
     } catch (e) {
-      showError(messenger, e, 'המתכון לא נטען');
+      showError(messenger, e, t('המתכון לא נטען'));
     }
   }
 
   /// Long-press: the usual things without opening the recipe first.
   Future<void> _menu(BuildContext context) async {
-    final pick = await showItemMenu(context, r.title, const [
-      (Icons.open_in_new, 'פתיחה'),
-      (Icons.edit_outlined, 'עריכה'),
-      (Icons.send_outlined, 'שליחה לחבר'),
+    final pick = await showItemMenu(context, r.title, [
+      (Icons.open_in_new, t('פתיחה')),
+      (Icons.edit_outlined, t('עריכה')),
+      (Icons.send_outlined, t('שליחה לחבר')),
     ]);
     if (!context.mounted) return;
     switch (pick) {
@@ -127,16 +128,16 @@ class LoadError extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.all(32),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text(errorText(error, 'לא נטען'), textAlign: TextAlign.center),
+          Text(errorText(error, t('לא נטען')), textAlign: TextAlign.center),
           const SizedBox(height: 16),
-          OutlinedButton(onPressed: retry, child: const Text('לנסות שוב')),
+          OutlinedButton(onPressed: retry, child: Text(t('לנסות שוב'))),
         ]),
       );
 }
 
 /// A cookbook's title ("ספר מתכונים חדש", or renaming one), or null when cancelled.
 Future<String?> askTitle(BuildContext context, String header,
-    {String initial = '', String ok = 'יצירה'}) async {
+    {String initial = '', String? ok}) async {
   final c = TextEditingController(text: initial);
   final title = await showDialog<String>(
     context: context,
@@ -146,12 +147,12 @@ Future<String?> askTitle(BuildContext context, String header,
         controller: c,
         autofocus: true,
         maxLength: 80,
-        decoration: const InputDecoration(hintText: 'למשל: ארוחות שישי'),
+        decoration: InputDecoration(hintText: t('למשל: ארוחות שישי')),
         onSubmitted: (v) => Navigator.pop(ctx, v),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('ביטול')),
-        FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: Text(ok)),
+        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t('ביטול'))),
+        FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: Text(ok ?? t('יצירה'))),
       ],
     ),
   );
@@ -176,7 +177,7 @@ Future<void> deleteWithUndo(
         duration: const Duration(seconds: 5),
         persist: false, // with an action it would otherwise wait for a tap forever
         content: Text(said),
-        action: SnackBarAction(label: 'ביטול', onPressed: () {}),
+        action: SnackBarAction(label: t('ביטול'), onPressed: () {}),
       ))
       .closed;
   if (closed == SnackBarClosedReason.action) return restore();

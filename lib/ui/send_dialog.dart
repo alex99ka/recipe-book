@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/errors.dart';
 import '../recipes/api.dart';
 import 'friends_screen.dart';
+import '../core/i18n.dart';
 
 /// Picks a friend and a note, then [send]s a copy of a recipe or a whole
 /// cookbook. True once it went; with no friends yet it offers an invite.
@@ -16,7 +17,7 @@ Future<bool> sendToFriend(
   try {
     friends = await Api.friends();
   } catch (e) {
-    showError(messenger, e, 'החברים לא נטענו');
+    showError(messenger, e, t('החברים לא נטענו'));
     return false;
   }
   if (!context.mounted) return false;
@@ -24,11 +25,11 @@ Future<bool> sendToFriend(
     final invite = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('עוד אין לכם חברים'),
-        content: const Text('מזמינים חבר בקישור, ואז אפשר לשלוח לו מתכונים וספרים.'),
+        title: Text(t('עוד אין לכם חברים')),
+        content: Text(t('מזמינים חבר בקישור, ואז אפשר לשלוח לו מתכונים וספרים.')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('ביטול')),
-          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('הזמנת חבר')),
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(t('ביטול'))),
+          FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(t('הזמנת חבר'))),
         ],
       ),
     );
@@ -43,10 +44,10 @@ Future<bool> sendToFriend(
     context: context,
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, set) => AlertDialog(
-        title: Text('לשלוח את „$title”'),
+        title: Text(t('לשלוח את „{0}”', [title])),
         content: SingleChildScrollView(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('החבר יקבל עותק משלו. שינויים שתעשו אחר כך לא יעברו אליו.'),
+            Text(t('החבר יקבל עותק משלו. שינויים שתעשו אחר כך לא יעברו אליו.')),
             RadioGroup<String>(
               groupValue: to.uid,
               onChanged: (v) => set(() => to = friends.firstWhere((f) => f.uid == v)),
@@ -59,17 +60,17 @@ Future<bool> sendToFriend(
               maxLength: 1000,
               maxLines: 3,
               minLines: 1,
-              decoration: const InputDecoration(
-                  labelText: 'הערה (לא חובה)',
-                  hintText: 'למשל: נסו עם כבש',
-                  helperText: 'כששולחים מתכון, ההערה פותחת שיחה ששניכם רואים בתוך המתכון',
+              decoration: InputDecoration(
+                  labelText: t('הערה (לא חובה)'),
+                  hintText: t('למשל: נסו עם כבש'),
+                  helperText: t('כששולחים מתכון, ההערה פותחת שיחה ששניכם רואים בתוך המתכון'),
                   helperMaxLines: 2),
             ),
           ]),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('ביטול')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('שליחה')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t('ביטול'))),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(t('שליחה'))),
         ],
       ),
     ),
@@ -77,10 +78,10 @@ Future<bool> sendToFriend(
   if (go != true) return false;
   try {
     await send(to.uid, note.text.trim());
-    messenger.showSnackBar(SnackBar(content: Text('נשלח ל${to.name}')));
+    messenger.showSnackBar(SnackBar(content: Text(t('נשלח ל{0}', [to.name]))));
     return true;
   } catch (e) {
-    showError(messenger, e, 'השליחה נכשלה');
+    showError(messenger, e, t('השליחה נכשלה'));
     return false;
   }
 }

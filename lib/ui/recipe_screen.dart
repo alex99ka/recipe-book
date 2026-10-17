@@ -13,6 +13,7 @@ import 'recipe_comments.dart';
 import 'recipe_widgets.dart';
 import 'send_dialog.dart';
 import 'skeleton.dart';
+import '../core/i18n.dart';
 
 /// A recipe in Hebrew: photo, rating, amounts ×1/×2/×3, cost, steps, and what
 /// you do with it (a cookbook, a friend, the shopping list), then comments.
@@ -74,7 +75,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _r = r);
-      showError(_messenger, e, 'הדירוג לא נשמר');
+      showError(_messenger, e, t('הדירוג לא נשמר'));
     }
   }
 
@@ -85,7 +86,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     try {
       all = await Api.collections();
     } catch (e) {
-      showError(_messenger, e, 'הספרים לא נטענו');
+      showError(_messenger, e, t('הספרים לא נטענו'));
       return;
     }
     if (!mounted) return;
@@ -94,10 +95,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, set) => AlertDialog(
-          title: const Text('הוספה לספר'),
+          title: Text(t('הוספה לספר')),
           content: SingleChildScrollView(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              if (all.isEmpty) const Text('עוד אין ספרים משלכם. התחילו ספר חדש:'),
+              if (all.isEmpty) Text(t('עוד אין ספרים משלכם. התחילו ספר חדש:')),
               for (final c in all)
                 CheckboxListTile(
                   title: Text(c.title),
@@ -107,10 +108,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
             ]),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, 'new'), child: const Text('ספר חדש')),
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('ביטול')),
+            TextButton(onPressed: () => Navigator.pop(ctx, 'new'), child: Text(t('ספר חדש'))),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t('ביטול'))),
             if (all.isNotEmpty)
-              FilledButton(onPressed: () => Navigator.pop(ctx, 'save'), child: const Text('שמירה')),
+              FilledButton(onPressed: () => Navigator.pop(ctx, 'save'), child: Text(t('שמירה'))),
           ],
         ),
       ),
@@ -124,17 +125,17 @@ class _RecipeScreenState extends State<RecipeScreen> {
             Api.fileRecipe(c.id!, r.id, chosen.contains(c.id)),
       ]);
       if (answer == 'new' && mounted) {
-        final title = await askTitle(context, 'ספר מתכונים חדש');
+        final title = await askTitle(context, t('ספר מתכונים חדש'));
         if (title != null) {
           final created = await Api.createCollection(title);
           await Api.fileRecipe(created.id!, r.id, true);
           chosen.add(created.id!);
-          _messenger.showSnackBar(SnackBar(content: Text('נוסף ל„${created.title}”')));
+          _messenger.showSnackBar(SnackBar(content: Text(t('נוסף ל„{0}”', [created.title]))));
         }
       }
       if (mounted) setState(() => _r = Recipe({...r.j, 'collections': chosen.toList()}));
     } catch (e) {
-      showError(_messenger, e, 'השינוי לא נשמר');
+      showError(_messenger, e, t('השינוי לא נשמר'));
       await _load();
     }
   }
@@ -164,7 +165,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
       // The to-do app takes this link over when it is installed; otherwise the browser.
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     } catch (e) {
-      showError(_messenger, e, 'רשימת הקניות לא נוצרה');
+      showError(_messenger, e, t('רשימת הקניות לא נוצרה'));
     } finally {
       if (mounted) setState(() => _shopping = false);
     }
@@ -185,7 +186,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
           if (isTikTok(r.sourceUrl))
             FilledButton.tonalIcon(
               icon: const Icon(Icons.play_circle_outline),
-              label: const Text('לסרטון בטיקטוק'),
+              label: Text(t('לסרטון בטיקטוק')),
               onPressed: () => launchUrl(Uri.parse(r.sourceUrl),
                   mode: LaunchMode.externalApplication),
             ),
@@ -193,14 +194,14 @@ class _RecipeScreenState extends State<RecipeScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                  [if (r.servings.isNotEmpty) '${r.servings} מנות', if (r.totalTime.isNotEmpty) r.totalTime]
+                  [if (r.servings.isNotEmpty) t('{0} מנות', [r.servings]), if (r.totalTime.isNotEmpty) r.totalTime]
                       .join(' · '),
                   style: TextStyle(color: muted)),
             ),
           if (r.translating || !r.translated)
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Text('התרגום לעברית בדרך. משכו למטה לרענון בעוד דקה.',
+              child: Text(t('התרגום בדרך. משכו למטה לרענון בעוד דקה.'),
                   style: TextStyle(color: muted)),
             ),
           ];
@@ -208,7 +209,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
         ? const <Widget>[]
         : <Widget>[
           const SizedBox(height: 16),
-          Text('מצרכים', style: text.titleMedium),
+          Text(t('מצרכים'), style: text.titleMedium),
           const SizedBox(height: 8),
           TourTarget(
             'recipe.scale',
@@ -223,7 +224,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
           if (_factor != 1)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text('הכמויות הוכפלו. זמני הבישול לא משתנים.',
+              child: Text(t('הכמויות הוכפלו. זמני הבישול לא משתנים.'),
                   style: TextStyle(color: muted)),
             ),
           const SizedBox(height: 8),
@@ -232,9 +233,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
                 note: r.cost == null
                     ? null
                     : p.was != null
-                        ? 'מחיר לבדיקה'
+                        ? t('מחיר לבדיקה')
                         : p.price == null
-                            ? 'בלי מחיר'
+                            ? t('בלי מחיר')
                             : null),
           if (r.cost case final c?) _CostBox(c, factor: _factor),
           const SizedBox(height: 16),
@@ -242,11 +243,11 @@ class _RecipeScreenState extends State<RecipeScreen> {
             'recipe.book',
             child: OutlinedButton.icon(
               icon: const Icon(Icons.bookmark_border),
-              label: Text('הוספה לספר${switch (r.collections.length) {
+              label: Text(t('הוספה לספר{0}', [switch (r.collections.length) {
                 0 => '',
-                1 => ' · בספר אחד',
-                final n => ' · ב־$n ספרים',
-              }}'),
+                1 => t(' · בספר אחד'),
+                final n => t(' · ב־{0} ספרים', [n]),
+              }])),
               onPressed: _fileInBooks,
             ),
           ),
@@ -254,7 +255,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
             'recipe.send',
             child: OutlinedButton.icon(
               icon: const Icon(Icons.send_outlined),
-              label: const Text('שליחה לחבר'),
+              label: Text(t('שליחה לחבר')),
               onPressed: _send,
             ),
           ),
@@ -265,7 +266,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
                   ? const SizedBox.square(
                       dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.shopping_cart_outlined),
-              label: const Text('הוספה לרשימת הקניות'),
+              label: Text(t('הוספה לרשימת הקניות')),
               onPressed: _shopping ? null : _shoppingList,
             ),
           ),
@@ -275,24 +276,24 @@ class _RecipeScreenState extends State<RecipeScreen> {
         : <Widget>[
           if (r.steps.isNotEmpty) ...[
             const SizedBox(height: 16),
-            Text('אופן ההכנה', style: text.titleMedium),
+            Text(t('אופן ההכנה'), style: text.titleMedium),
             const SizedBox(height: 8),
             for (final (i, s) in r.steps.indexed) _Bullet(s, number: i + 1),
           ],
           if (r.allTags.isNotEmpty) ...[
             const SizedBox(height: 16),
-            Text('תגיות', style: text.titleMedium),
+            Text(t('תגיות'), style: text.titleMedium),
             const SizedBox(height: 8),
             Wrap(spacing: 8, runSpacing: 8, children: [
-              for (final t in r.allTags)
+              for (final tag in r.allTags)
                 ActionChip(
-                  label: Text(t),
-                  tooltip: 'כל המתכונים עם $t',
+                  label: Text(tag),
+                  tooltip: t('כל המתכונים עם {0}', [tag]),
                   onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute<void>(
                           builder: (_) =>
-                              CookbookScreen(Shelf({'title': t}), tag: t))),
+                              CookbookScreen(Shelf({'title': tag}), tag: tag))),
                 ),
             ]),
           ],
@@ -301,7 +302,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
               alignment: AlignmentDirectional.centerStart,
               child: TextButton.icon(
                 icon: const Icon(Icons.link),
-                label: const Text('למקור'),
+                label: Text(t('למקור')),
                 onPressed: () => launchUrl(Uri.parse(r.sourceUrl),
                     mode: LaunchMode.externalApplication),
               ),
@@ -311,13 +312,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
       appBar: AppBar(title: Text(r?.title ?? widget.title), actions: [
         if (r != null)
           IconButton(
-              tooltip: 'ייצוא (PDF, טקסט, Markdown)',
+              tooltip: t('ייצוא (PDF, טקסט, Markdown)'),
               icon: const Icon(Icons.ios_share),
               onPressed: () => exportRecipeFile(context, r, _lines)),
         if (r != null)
           TourTarget(
             'recipe.edit',
-            child: IconButton(tooltip: 'עריכה', icon: const Icon(Icons.edit_outlined), onPressed: _edit),
+            child: IconButton(tooltip: t('עריכה'), icon: const Icon(Icons.edit_outlined), onPressed: _edit),
           ),
       ]),
       body: _error != null && r == null
@@ -375,7 +376,7 @@ class _Stars extends StatelessWidget {
     return Row(children: [
       for (var i = 1; i <= 5; i++)
         IconButton(
-          tooltip: '$i כוכבים',
+          tooltip: t('{0} כוכבים', [i]),
           visualDensity: VisualDensity.compact,
           color: Theme.of(context).colorScheme.tertiary,
           icon: Icon(r >= i ? Icons.star : r >= i - 0.5 ? Icons.star_half : Icons.star_border),
@@ -427,13 +428,13 @@ class _CostBox extends StatelessWidget {
             color: scheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(8)),
         child: Row(children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('עלות משוערת', style: muted),
+            Text(t('עלות משוערת'), style: muted),
             Text('${(c.total * factor).toStringAsFixed(2)} ₪', style: big),
           ]),
           if (c.perServing != null && c.servings != null) ...[
             const SizedBox(width: 24),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('למנה (${pretty(c.servings! * factor)} מנות)', style: muted),
+              Text(t('למנה ({0} מנות)', [pretty(c.servings! * factor)]), style: muted),
               Text('${c.perServing!.toStringAsFixed(2)} ₪', style: big),
             ]),
           ],
@@ -443,8 +444,8 @@ class _CostBox extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text([
-            if (c.missing > 0) 'לא כולל ${c.missing} מצרכים בלי מחיר.',
-            if (c.stale > 0) '${c.stale} מחירים לבדיקה: השורה השתנתה מאז שתומחרה.',
+            if (c.missing > 0) t('לא כולל {0} מצרכים בלי מחיר.', [c.missing]),
+            if (c.stale > 0) t('{0} מחירים לבדיקה: השורה השתנתה מאז שתומחרה.', [c.stale]),
           ].join(' '), style: muted),
         ),
     ]);

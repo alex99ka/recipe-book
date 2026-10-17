@@ -11,6 +11,7 @@ import '../core/errors.dart';
 import '../recipes/api.dart';
 import '../recipes/export.dart';
 import 'recipe_widgets.dart';
+import '../core/i18n.dart';
 
 /// Settings › "ייצוא הספר": reads the book with a progress dialog, then hands
 /// over two files.
@@ -22,13 +23,13 @@ Future<void> exportBookFiles(BuildContext context) async {
     context: context,
     barrierDismissible: false,
     builder: (c) => AlertDialog(
-      title: const Text('מכין את הייצוא'),
+      title: Text(t('מכין את הייצוא')),
       content: ValueListenableBuilder(
         valueListenable: progress,
         builder: (_, p, _) => Column(mainAxisSize: MainAxisSize.min, children: [
           LinearProgressIndicator(value: p.$2 == 0 ? null : p.$1 / p.$2),
           const SizedBox(height: 12),
-          Text(p.$2 == 0 ? 'קורא את רשימת המתכונים…' : '${p.$1} מתוך ${p.$2} מתכונים'),
+          Text(p.$2 == 0 ? t('קורא את רשימת המתכונים…') : t('{0} מתוך {1} מתכונים', [p.$1, p.$2])),
         ]),
       ),
     ),
@@ -38,7 +39,7 @@ Future<void> exportBookFiles(BuildContext context) async {
     export = await exportBook(progress: progress);
   } catch (e) {
     nav.pop();
-    showError(messenger, e, 'הייצוא נכשל');
+    showError(messenger, e, t('הייצוא נכשל'));
     return;
   }
   nav.pop();
@@ -47,7 +48,7 @@ Future<void> exportBookFiles(BuildContext context) async {
     XFile.fromData(utf8.encode(export.json), name: 'recipes-$day.json', mimeType: 'application/json'),
     XFile.fromData(utf8.encode(export.csv), name: 'recipes-$day.csv', mimeType: 'text/csv'),
   ];
-  await _handOver(messenger, files, 'ספר המתכונים');
+  await _handOver(messenger, files, t('ספר המתכונים'));
 }
 
 /// Windows: a folder to save them in. Android and the web: the share sheet
@@ -55,12 +56,12 @@ Future<void> exportBookFiles(BuildContext context) async {
 Future<void> _handOver(ScaffoldMessengerState messenger, List<XFile> files, String title) async {
   try {
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
-      final dir = await getDirectoryPath(confirmButtonText: 'שמירה כאן');
+      final dir = await getDirectoryPath(confirmButtonText: t('שמירה כאן'));
       if (dir == null) return;
       for (final f in files) {
         await f.saveTo('$dir\\${f.name}');
       }
-      messenger.showSnackBar(SnackBar(content: Text('נשמר בתיקייה $dir')));
+      messenger.showSnackBar(SnackBar(content: Text(t('נשמר בתיקייה {0}', [dir]))));
     } else {
       await SharePlus.instance.share(ShareParams(
         files: files,
@@ -69,16 +70,16 @@ Future<void> _handOver(ScaffoldMessengerState messenger, List<XFile> files, Stri
       ));
     }
   } catch (e) {
-    showError(messenger, e, 'שמירת הקבצים נכשלה');
+    showError(messenger, e, t('שמירת הקבצים נכשלה'));
   }
 }
 
 /// The recipe page's "ייצוא": PDF (with the photo), text or Markdown.
 Future<void> exportRecipeFile(BuildContext context, Recipe r, List<String> lines) async {
   final messenger = ScaffoldMessenger.of(context);
-  final kind = await showItemMenu(context, 'ייצוא המתכון', const [
-    (Icons.picture_as_pdf_outlined, 'PDF עם התמונה'),
-    (Icons.notes, 'טקסט (TXT)'),
+  final kind = await showItemMenu(context, t('ייצוא המתכון'), [
+    (Icons.picture_as_pdf_outlined, t('PDF עם התמונה')),
+    (Icons.notes, t('טקסט (TXT)')),
     (Icons.code, 'Markdown (MD)'),
   ]);
   if (kind == null) return;
@@ -98,7 +99,7 @@ Future<void> exportRecipeFile(BuildContext context, Recipe r, List<String> lines
           name: '$name.md', mimeType: 'text/markdown'),
     };
   } catch (e) {
-    showError(messenger, e, 'הייצוא נכשל');
+    showError(messenger, e, t('הייצוא נכשל'));
     return;
   }
   await _handOver(messenger, [file], r.title);

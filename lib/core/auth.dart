@@ -14,6 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../config.dart';
 import 'errors.dart';
 import 'notifications.dart';
+import 'i18n.dart';
 
 /// Google sign-in on every platform, ending in a Firebase session that stays
 /// signed in: nothing here signs out except the user's own "יציאה".
@@ -104,9 +105,7 @@ abstract final class Auth {
       request.response
         ..statusCode = 200
         ..headers.contentType = ContentType.html
-        ..write('<html dir="rtl"><body style="font-family:sans-serif;'
-            'text-align:center;margin-top:20vh"><h2>אפשר לחזור לאפליקציה</h2>'
-            '</body></html>');
+        ..write(t('<html dir="rtl"><body style="font-family:sans-serif;text-align:center;margin-top:20vh"><h2>אפשר לחזור לאפליקציה</h2></body></html>'));
       await request.response.close();
       if (q['state'] != state || q['code'] == null) throw Errors.googleCancelled;
       final res = await http.post(

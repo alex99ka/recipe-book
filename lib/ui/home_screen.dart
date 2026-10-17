@@ -24,6 +24,7 @@ import 'send_dialog.dart';
 import 'settings_page.dart';
 import 'skeleton.dart';
 import 'update_banner.dart';
+import '../core/i18n.dart';
 
 /// Search, the book's own cookbooks, the scanned cookbooks, what was added
 /// lately, and the way to add a recipe or open what friends sent.
@@ -107,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (steps != null && AppConfig.releaseNotes.isNotEmpty) {
       messenger.showSnackBar(SnackBar(
         duration: const Duration(seconds: 8),
-        content: Text('מה חדש בגרסה ${AppInfo.version}: ${AppConfig.releaseNotes}'),
+        content: Text(t('מה חדש בגרסה {0}: {1}', [AppInfo.version, AppConfig.releaseNotes])),
       ));
     }
   }
@@ -171,14 +172,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _newCollection() async {
-    final title = await askTitle(context, 'ספר מתכונים חדש');
+    final title = await askTitle(context, t('ספר מתכונים חדש'));
     if (title == null || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     try {
       final created = await Api.createCollection(title);
       setState(() => _collections = [..._collections, created]);
     } catch (e) {
-      showError(messenger, e, 'הספר לא נוצר');
+      showError(messenger, e, t('הספר לא נוצר'));
     }
   }
 
@@ -188,12 +189,12 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Long-press on one of the book's own cookbooks.
   Future<void> _shelfMenu(Shelf s) async {
     final pick = await showItemMenu(context, s.title, [
-      (Icons.open_in_new, 'פתיחה'),
-      (Icons.edit_outlined, 'שינוי שם'),
-      (Icons.send_outlined, 'שליחה לחבר'),
-      (Icons.delete_outline, 'מחיקת הספר'),
-      (Icons.image_outlined, 'תמונת שער'),
-      if (s.customCover) (Icons.hide_image_outlined, 'שער לפי המתכון האחרון'),
+      (Icons.open_in_new, t('פתיחה')),
+      (Icons.edit_outlined, t('שינוי שם')),
+      (Icons.send_outlined, t('שליחה לחבר')),
+      (Icons.delete_outline, t('מחיקת הספר')),
+      (Icons.image_outlined, t('תמונת שער')),
+      if (s.customCover) (Icons.hide_image_outlined, t('שער לפי המתכון האחרון')),
     ]);
     if (!mounted || pick == null) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -205,24 +206,24 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         _open(s);
       case 1:
-        final title = await askTitle(context, 'שם הספר', initial: s.title, ok: 'שמירה');
+        final title = await askTitle(context, t('שם הספר'), initial: s.title, ok: t('שמירה'));
         if (title == null || title == s.title) return;
         try {
           await Api.renameCollection(s.id!, title);
           await _load();
         } catch (e) {
-          showError(messenger, e, 'השם לא נשמר');
+          showError(messenger, e, t('השם לא נשמר'));
         }
       case 2:
         await sendToFriend(context,
             title: s.title, send: (to, note) => Api.sendCollection(s.id!, to, note));
       case 3:
         await deleteWithUndo(messenger,
-            said: 'הספר „${s.title}” נמחק. המתכונים שבו נשארו.',
+            said: t('הספר „{0}” נמחק. המתכונים שבו נשארו.', [s.title]),
             hide: () => hidden(true),
             restore: () => hidden(false),
             delete: () => Api.deleteCollection(s.id!),
-            failed: 'הספר לא נמחק');
+            failed: t('הספר לא נמחק'));
         await _load();
       case 4:
         final p = await pickPhoto(context);
@@ -231,14 +232,14 @@ class _HomeScreenState extends State<HomeScreen> {
           await Api.setCollectionCover(s.id!, p);
           await _load();
         } catch (e) {
-          showError(messenger, e, 'התמונה לא הועלתה');
+          showError(messenger, e, t('התמונה לא הועלתה'));
         }
       case 5:
         try {
           await Api.resetCollectionCover(s.id!);
           await _load();
         } catch (e) {
-          showError(messenger, e, 'השער לא שונה');
+          showError(messenger, e, t('השער לא שונה'));
         }
     }
   }
@@ -261,15 +262,15 @@ class _HomeScreenState extends State<HomeScreen> {
             ? TextField(
                 controller: _search,
                 autofocus: true,
-                decoration: const InputDecoration(hintText: 'חיפוש מתכון', border: InputBorder.none),
+                decoration: InputDecoration(hintText: t('חיפוש מתכון'), border: InputBorder.none),
                 onChanged: _onSearch,
               )
-            : const Text(AppConfig.name),
+            : Text(t(AppConfig.name)),
         actions: [
           TourTarget(
             'home.search',
             child: IconButton(
-              tooltip: _searching ? 'סגירת החיפוש' : 'חיפוש',
+              tooltip: _searching ? t('סגירת החיפוש') : t('חיפוש'),
               icon: Icon(_searching ? Icons.close : Icons.search),
               onPressed: () {
                 setState(() => _searching = !_searching);
@@ -292,7 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: ListenableBuilder(
               listenable: RemoteConfig.instance,
               builder: (context, _) => IconButton(
-                tooltip: Api.inboxCount == 0 ? 'התקבל מחברים' : 'התקבל מחברים: ${Api.inboxCount}',
+                tooltip: Api.inboxCount == 0 ? t('התקבל מחברים') : t('התקבל מחברים: {0}', [Api.inboxCount]),
                 icon: Badge(
                   isLabelVisible: Api.inboxCount > 0,
                   label: Text('${Api.inboxCount}'),
@@ -307,7 +308,7 @@ class _HomeScreenState extends State<HomeScreen> {
           TourTarget(
             'settings',
             child: IconButton(
-              tooltip: 'הגדרות',
+              tooltip: t('הגדרות'),
               icon: const Icon(Icons.settings_outlined),
               onPressed: () => Navigator.push(context,
                       MaterialPageRoute<void>(builder: (_) => const SettingsPage()))
@@ -321,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: FloatingActionButton.extended(
           onPressed: _add,
           icon: const Icon(Icons.add),
-          label: const Text('מתכון חדש'),
+          label: Text(t('מתכון חדש')),
         ),
       ),
       body: Column(children: [
@@ -362,7 +363,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         if (_browsing) ...[
-                          const _Header('הספרים שלי'),
+                          _Header(t('הספרים שלי')),
                           TourTarget(
                             'home.mine',
                             child: _ShelfRow([
@@ -372,11 +373,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                     icon: Icons.menu_book_outlined,
                                     onTap: () => _open(c),
                                     onLongPress: () => _shelfMenu(c)),
-                              _ShelfCard(null, icon: Icons.add, label: 'ספר חדש', onTap: _newCollection),
+                              _ShelfCard(null, icon: Icons.add, label: t('ספר חדש'), onTap: _newCollection),
                             ]),
                           ),
                           if (_cookbooks.isNotEmpty) ...[
-                            const _Header('ספרי בישול'),
+                            _Header(t('ספרי בישול')),
                             TourTarget(
                               'home.cookbooks',
                               child: _ShelfRow([
@@ -387,12 +388,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ],
                         _Header(_browsing
-                            ? (_all ? 'כל המתכונים (${recipes!.length})' : 'נוספו לאחרונה')
-                            : _tag != null && _q.isEmpty ? 'תגית: $_tag' : 'תוצאות'),
+                            ? (_all ? t('כל המתכונים ({0})', [recipes!.length]) : t('נוספו לאחרונה'))
+                            : _tag != null && _q.isEmpty ? t('תגית: {0}', [_tag]) : t('תוצאות')),
                         if (shown.isEmpty)
                           Padding(
                             padding: const EdgeInsets.all(48),
-                            child: Text(_browsing ? 'הספר עוד ריק.' : 'לא נמצא מתכון.',
+                            child: Text(_browsing ? t('הספר עוד ריק.') : t('לא נמצא מתכון.'),
                                 textAlign: TextAlign.center),
                           ),
                         // Wide (a tablet, or a phone on its side): two recipes a row.
@@ -414,7 +415,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: OutlinedButton.icon(
                               onPressed: () => setState(() => _all = true),
                               icon: const Icon(Icons.expand_more),
-                              label: Text('כל המתכונים (${recipes.length})'),
+                              label: Text(t('כל המתכונים ({0})', [recipes.length])),
                             ),
                           ),
                         const SizedBox(height: 88), // clear of the add button

@@ -6,6 +6,7 @@ import '../config.dart';
 import '../core/app_info.dart';
 import '../core/auth.dart';
 import '../core/errors.dart';
+import '../core/i18n.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -49,7 +50,7 @@ class _SignInScreenState extends State<SignInScreen>
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context);
+    final theme = Theme.of(context);
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -67,8 +68,8 @@ class _SignInScreenState extends State<SignInScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(AppConfig.name,
-                        style: t.textTheme.headlineMedium,
+                    Text(t(AppConfig.name),
+                        style: theme.textTheme.headlineMedium,
                         textAlign: TextAlign.center),
                     const SizedBox(height: 40),
                     FilledButton.icon(
@@ -78,18 +79,18 @@ class _SignInScreenState extends State<SignInScreen>
                               dimension: 18,
                               child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.login),
-                      label: const Text('כניסה עם Google'),
+                      label: Text(t('כניסה עם Google')),
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 16),
                       Text(_error!,
-                          style: TextStyle(color: t.colorScheme.error),
+                          style: TextStyle(color: theme.colorScheme.error),
                           textAlign: TextAlign.center),
                     ],
                     const SizedBox(height: 40),
-                    Text('גרסה ${AppInfo.versionLabel}',
-                        style: t.textTheme.bodySmall
-                            ?.copyWith(color: t.colorScheme.onSurfaceVariant)),
+                    Text(t('גרסה {0}', [AppInfo.versionLabel]),
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ),

@@ -5,6 +5,7 @@ import '../recipes/api.dart';
 import 'recipe_widgets.dart';
 import 'send_dialog.dart';
 import 'skeleton.dart';
+import '../core/i18n.dart';
 
 /// Opens a cookbook. A delete chosen inside happens here, behind the undo
 /// toast: [hidden] hides or shows it again in the caller's list, [after] then
@@ -16,11 +17,11 @@ Future<void> openCookbook(BuildContext context, Shelf s,
       context, MaterialPageRoute(builder: (_) => CookbookScreen(s)));
   if (r == 'delete') {
     await deleteWithUndo(messenger,
-        said: 'הספר „${s.title}” נמחק. המתכונים שבו נשארו.',
+        said: t('הספר „{0}” נמחק. המתכונים שבו נשארו.', [s.title]),
         hide: () => hidden?.call(true),
         restore: () => hidden?.call(false),
         delete: () => Api.deleteCollection(s.id!),
-        failed: 'הספר לא נמחק');
+        failed: t('הספר לא נמחק'));
   }
   after?.call();
 }
@@ -62,13 +63,13 @@ class _CookbookScreenState extends State<CookbookScreen> {
   ScaffoldMessengerState get _messenger => ScaffoldMessenger.of(context);
 
   Future<void> _rename() async {
-    final title = await askTitle(context, 'שם הספר', initial: _title, ok: 'שמירה');
+    final title = await askTitle(context, t('שם הספר'), initial: _title, ok: t('שמירה'));
     if (title == null || title == _title) return;
     try {
       await Api.renameCollection(widget.shelf.id!, title);
       if (mounted) setState(() => _title = title);
     } catch (e) {
-      showError(_messenger, e, 'השם לא נשמר');
+      showError(_messenger, e, t('השם לא נשמר'));
     }
   }
 
@@ -83,16 +84,16 @@ class _CookbookScreenState extends State<CookbookScreen> {
       appBar: AppBar(title: Text(_title), actions: [
         if (own)
           PopupMenuButton<VoidCallback>(
-            tooltip: 'עוד',
+            tooltip: t('עוד'),
             onSelected: (f) => f(),
             itemBuilder: (_) => [
-              PopupMenuItem(value: _rename, child: const Text('שינוי שם')),
+              PopupMenuItem(value: _rename, child: Text(t('שינוי שם'))),
               PopupMenuItem(
                 value: () => sendToFriend(context,
                     title: _title, send: (to, note) => Api.sendCollection(widget.shelf.id!, to, note)),
-                child: const Text('שליחה לחבר'),
+                child: Text(t('שליחה לחבר')),
               ),
-              PopupMenuItem(value: _delete, child: const Text('מחיקת הספר')),
+              PopupMenuItem(value: _delete, child: Text(t('מחיקת הספר'))),
             ],
           ),
       ]),
@@ -104,9 +105,9 @@ class _CookbookScreenState extends State<CookbookScreen> {
                   onRefresh: _load,
                   child: ListView(children: [
                     if (recipes.isEmpty)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.all(48),
-                        child: Text('אין עדיין מתכונים בספר הזה. מוסיפים מתוך מתכון: "הוספה לספר".',
+                        child: Text(t('אין עדיין מתכונים בספר הזה. מוסיפים מתוך מתכון: "הוספה לספר".'),
                             textAlign: TextAlign.center),
                       ),
                     for (final r in recipes) RecipeTile(r, onBack: _load),

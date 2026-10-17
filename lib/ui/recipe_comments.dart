@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/errors.dart';
 import '../recipes/api.dart';
 import 'recipe_widgets.dart';
+import '../core/i18n.dart';
 
 /// Comments at the bottom of a recipe: the book's own, and on an original,
 /// one conversation per friend it was sent to.
@@ -57,7 +58,7 @@ class RecipeCommentsState extends State<RecipeComments> {
       _draft(key).clear();
       await load();
     } catch (e) {
-      showError(messenger, e, 'התגובה לא נשלחה');
+      showError(messenger, e, t('התגובה לא נשלחה'));
     }
   }
 
@@ -67,11 +68,11 @@ class RecipeCommentsState extends State<RecipeComments> {
     }
 
     await deleteWithUndo(ScaffoldMessenger.of(context),
-        said: 'התגובה נמחקה',
+        said: t('התגובה נמחקה'),
         hide: () => shown(true),
         restore: () => shown(false),
         delete: () => Api.deleteComment(c.id),
-        failed: 'התגובה לא נמחקה');
+        failed: t('התגובה לא נמחקה'));
   }
 
   @override
@@ -80,15 +81,15 @@ class RecipeCommentsState extends State<RecipeComments> {
     if (d == null) return const SizedBox.shrink();
     final muted = TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant);
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _header(context, 'תגובות'),
+      _header(context, t('תגובות')),
       if (d.sentBy != null)
-        _hint('המתכון הגיע מ${d.sentBy}, שרואה גם את התגובות כאן.', muted),
-      ..._list(d.comments, 'אין עדיין תגובות. בישלתם? ספרו איך יצא.', muted),
-      _composer('', 'תגובה'),
-      for (final t in d.threads) ...[
-        _header(context, 'שיחה עם ${t.friend.isEmpty ? 'חבר' : t.friend}'),
-        ..._list(t.comments, 'עוד לא כתבתם זה לזה על המתכון.', muted),
-        _composer(t.copyId, 'תשובה ל${t.friend.isEmpty ? 'חבר' : t.friend}'),
+        _hint(t('המתכון הגיע מ{0}, שרואה גם את התגובות כאן.', [d.sentBy]), muted),
+      ..._list(d.comments, t('אין עדיין תגובות. בישלתם? ספרו איך יצא.'), muted),
+      _composer('', t('תגובה')),
+      for (final th in d.threads) ...[
+        _header(context, t('שיחה עם {0}', [th.friend.isEmpty ? t('חבר') : th.friend])),
+        ..._list(th.comments, t('עוד לא כתבתם זה לזה על המתכון.'), muted),
+        _composer(th.copyId, t('תשובה ל{0}', [th.friend.isEmpty ? t('חבר') : th.friend])),
       ],
     ]);
   }
@@ -111,7 +112,7 @@ class RecipeCommentsState extends State<RecipeComments> {
               subtitle: Text(c.body),
               trailing: c.mine
                   ? IconButton(
-                      tooltip: 'מחיקת התגובה',
+                      tooltip: t('מחיקת התגובה'),
                       icon: const Icon(Icons.delete_outline),
                       onPressed: () => _remove(c))
                   : null,
@@ -133,7 +134,7 @@ class RecipeCommentsState extends State<RecipeComments> {
           ListenableBuilder(
             listenable: _draft(key),
             builder: (context, _) => IconButton(
-              tooltip: 'שליחה',
+              tooltip: t('שליחה'),
               icon: const Icon(Icons.send),
               onPressed: _draft(key).text.trim().isEmpty ? null : () => _post(key),
             ),

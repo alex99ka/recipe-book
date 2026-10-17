@@ -4,6 +4,7 @@ import '../core/errors.dart';
 import '../recipes/api.dart';
 import 'pick.dart';
 import 'recipe_widgets.dart';
+import '../core/i18n.dart';
 
 /// Name, photo, tags, categories, source link and ingredient prices; and
 /// deleting the recipe. Pops true when something was saved, 'deleted' when gone.
@@ -51,7 +52,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
       final image = await Api.setPhoto(r.id, p);
       if (mounted) setState(() { _image = image; _photoChanged = true; });
     } catch (e) {
-      showError(_messenger, e, 'התמונה לא הועלתה');
+      showError(_messenger, e, t('התמונה לא הועלתה'));
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
@@ -79,7 +80,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
       }
       if (mounted) Navigator.pop(context, patch.isNotEmpty || pricesChanged || _photoChanged);
     } catch (e) {
-      showError(_messenger, e, 'השינויים לא נשמרו');
+      showError(_messenger, e, t('השינויים לא נשמרו'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -89,14 +90,14 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     final yes = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: Text('למחוק את „${r.title}”?'),
-        content: const Text('המתכון יימחק מהספר לכולם בבית. אי אפשר לבטל.'),
+        title: Text(t('למחוק את „{0}”?', [r.title])),
+        content: Text(t('המתכון יימחק מהספר לכולם בבית. אי אפשר לבטל.')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('ביטול')),
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(t('ביטול'))),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Theme.of(c).colorScheme.error),
             onPressed: () => Navigator.pop(c, true),
-            child: const Text('מחיקה'),
+            child: Text(t('מחיקה')),
           ),
         ],
       ),
@@ -107,7 +108,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
       await Api.deleteRecipe(r.id);
       if (mounted) Navigator.pop(context, 'deleted');
     } catch (e) {
-      showError(_messenger, e, 'המתכון לא נמחק');
+      showError(_messenger, e, t('המתכון לא נמחק'));
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -123,13 +124,13 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('עריכת מתכון'),
+          title: Text(t('עריכת מתכון')),
           actions: [
             TextButton(
               onPressed: _busy ? null : _save,
               child: _busy
                   ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('שמירה'),
+                  : Text(t('שמירה')),
             ),
           ],
         ),
@@ -137,7 +138,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           if (_image != null) NetImage(_image, height: 220),
           ListTile(
             leading: const Icon(Icons.photo_camera_outlined),
-            title: Text(_image == null ? 'הוספת תמונה' : 'החלפת התמונה'),
+            title: Text(_image == null ? t('הוספת תמונה') : t('החלפת התמונה')),
             trailing: _uploading
                 ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
                 : null,
@@ -146,36 +147,36 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(children: [
-              TextField(controller: _name, decoration: const InputDecoration(labelText: 'שם (בשפת המקור)')),
-              TextField(controller: _tags, decoration: const InputDecoration(labelText: 'תגיות, מופרדות בפסיק')),
+              TextField(controller: _name, decoration: InputDecoration(labelText: t('שם (בשפת המקור)'))),
+              TextField(controller: _tags, decoration: InputDecoration(labelText: t('תגיות, מופרדות בפסיק'))),
               TextField(
                   controller: _categories,
-                  decoration: const InputDecoration(labelText: 'קטגוריות, מופרדות בפסיק')),
+                  decoration: InputDecoration(labelText: t('קטגוריות, מופרדות בפסיק'))),
               TextField(
                 controller: _source,
                 keyboardType: TextInputType.url,
                 textDirection: TextDirection.ltr,
-                decoration: const InputDecoration(labelText: 'קישור למקור'),
+                decoration: InputDecoration(labelText: t('קישור למקור')),
               ),
             ]),
           ),
           if (r.prices.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-              child: Text('מחירים', style: Theme.of(context).textTheme.titleMedium),
+              child: Text(t('מחירים'), style: Theme.of(context).textTheme.titleMedium),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text('מחיר הכמות שבמתכון, בשקלים. ריק אם אין מחיר.', style: muted),
+              child: Text(t('מחיר הכמות שבמתכון, בשקלים. ריק אם אין מחיר.'), style: muted),
             ),
             for (final (i, p) in r.prices.indexed)
               ListTile(
                 title: Text(p.line),
-                subtitle: p.was == null ? null : Text('תומחר כשהשורה הייתה: ${p.was}'),
+                subtitle: p.was == null ? null : Text(t('תומחר כשהשורה הייתה: {0}', [p.was])),
                 trailing: SizedBox(
                   width: 96,
                   child: Semantics(
-                    label: 'מחיר: ${p.line}',
+                    label: t('מחיר: {0}', [p.line]),
                     child: TextField(
                       controller: _prices[i],
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -191,7 +192,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
               icon: const Icon(Icons.delete_outline),
-              label: const Text('מחיקת המתכון'),
+              label: Text(t('מחיקת המתכון')),
               onPressed: _busy ? null : _delete,
             ),
           ),

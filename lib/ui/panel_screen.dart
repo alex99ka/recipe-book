@@ -4,6 +4,7 @@ import '../core/errors.dart';
 import '../recipes/api.dart';
 import 'recipe_widgets.dart';
 import 'skeleton.dart';
+import '../core/i18n.dart';
 
 /// The kitchen's e-ink screen: link it to this book with the code it shows,
 /// and pick the calendars its idle page lists.
@@ -56,7 +57,7 @@ class _PanelScreenState extends State<PanelScreen> {
           onSubmitted: (v) => Navigator.pop(ctx, v),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('ביטול')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t('ביטול'))),
           FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: Text(ok)),
         ],
       ),
@@ -71,7 +72,7 @@ class _PanelScreenState extends State<PanelScreen> {
           title: Text(title),
           content: Text(body),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('ביטול')),
+            TextButton(onPressed: () => Navigator.pop(c, false), child: Text(t('ביטול'))),
             FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(ok)),
           ],
         ),
@@ -79,70 +80,70 @@ class _PanelScreenState extends State<PanelScreen> {
       true;
 
   Future<void> _link() async {
-    final code = await _ask('חיבור המסך', 'חיבור', hint: 'הקוד שעל המסך', type: TextInputType.number);
+    final code = await _ask(t('חיבור המסך'), t('חיבור'), hint: t('הקוד שעל המסך'), type: TextInputType.number);
     if (code == null) return;
     try {
       await Api.linkPanel(code);
-      _messenger.showSnackBar(const SnackBar(content: Text('המסך מחובר. בלחיצה הבאה הוא יציג את הספר.')));
+      _messenger.showSnackBar(SnackBar(content: Text(t('המסך מחובר. בלחיצה הבאה הוא יציג את הספר.'))));
       await _load();
     } catch (e) {
-      showError(_messenger, e, 'המסך לא חובר');
+      showError(_messenger, e, t('המסך לא חובר'));
     }
   }
 
   Future<void> _unlink() async {
-    if (!await _confirm('לנתק את המסך?',
-        'עד שיחובר שוב, המסך יציג רק קוד חיבור. היומנים נשמרים אם תחברו אותו שוב לספר הזה.', 'ניתוק')) {
+    if (!await _confirm(t('לנתק את המסך?'),
+        t('עד שיחובר שוב, המסך יציג רק קוד חיבור. היומנים נשמרים אם תחברו אותו שוב לספר הזה.'), t('ניתוק'))) {
       return;
     }
     try {
       await Api.unlinkPanel();
       if (mounted) setState(() { _panel = PanelState.free; _calendars = null; });
     } catch (e) {
-      showError(_messenger, e, 'המסך לא נותק');
+      showError(_messenger, e, t('המסך לא נותק'));
     }
   }
 
   Future<void> _addCalendar() async {
-    final url = await _ask('הוספת יומן', 'הבא',
-        hint: 'כתובת ICS (https://… או webcal://…)',
-        help: 'ביומן Google: הגדרות היומן ← "כתובת סודית בפורמט iCal".',
+    final url = await _ask(t('הוספת יומן'), t('הבא'),
+        hint: t('כתובת ICS (https://… או webcal://…)'),
+        help: t('ביומן Google: הגדרות היומן ← "כתובת סודית בפורמט iCal".'),
         type: TextInputType.url);
     if (url == null || !mounted) return;
-    final name = await _ask('שם היומן', 'הוספה', hint: 'שם קצר, למשל: עבודה', maxLength: 40) ?? '';
+    final name = await _ask(t('שם היומן'), t('הוספה'), hint: t('שם קצר, למשל: עבודה'), maxLength: 40) ?? '';
     setState(() => _busy = true);
     try {
       final upcoming = await Api.addCalendar(url, name);
-      _messenger.showSnackBar(SnackBar(content: Text('היומן נוסף: $upcoming אירועים בחודש הקרוב')));
+      _messenger.showSnackBar(SnackBar(content: Text(t('היומן נוסף: {0} אירועים בחודש הקרוב', [upcoming]))));
       final list = await Api.calendars();
       if (mounted) setState(() => _calendars = list);
     } catch (e) {
-      showError(_messenger, e, 'היומן לא נוסף');
+      showError(_messenger, e, t('היומן לא נוסף'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _rename(CalendarFeed c) async {
-    final name = await _ask('שם היומן', 'שמירה', initial: c.name, maxLength: 40);
+    final name = await _ask(t('שם היומן'), t('שמירה'), initial: c.name, maxLength: 40);
     if (name == null || name == c.name) return;
     try {
       await Api.renameCalendar(c.index, name);
       await _load();
     } catch (e) {
-      showError(_messenger, e, 'השם לא נשמר');
+      showError(_messenger, e, t('השם לא נשמר'));
     }
   }
 
   Future<void> _remove(CalendarFeed c) async {
-    if (!await _confirm('להסיר את „${c.name}”?', 'היומן עצמו לא נמחק, הוא רק לא יופיע במסך.', 'הסרה')) {
+    if (!await _confirm(t('להסיר את „{0}”?', [c.name]), t('היומן עצמו לא נמחק, הוא רק לא יופיע במסך.'), t('הסרה'))) {
       return;
     }
     try {
       await Api.deleteCalendar(c.index);
       await _load(); // indexes shift after a removal
     } catch (e) {
-      showError(_messenger, e, 'היומן לא הוסר');
+      showError(_messenger, e, t('היומן לא הוסר'));
     }
   }
 
@@ -153,7 +154,7 @@ class _PanelScreenState extends State<PanelScreen> {
     Widget note(String text) =>
         Padding(padding: const EdgeInsets.all(16), child: Text(text, style: muted));
     return Scaffold(
-      appBar: AppBar(title: const Text('המסך')),
+      appBar: AppBar(title: Text(t('המסך'))),
       body: _error != null && panel == null
           ? Center(child: LoadError(_error!, retry: _load))
           : panel == null
@@ -162,57 +163,57 @@ class _PanelScreenState extends State<PanelScreen> {
                   onRefresh: _load,
                   child: ListView(children: [
                     if (panel == PanelState.mine) ...[
-                      note('המסך מחובר לספר הזה. היומנים מופיעים במסך המנוחה שלו.'),
+                      note(t('המסך מחובר לספר הזה. היומנים מופיעים במסך המנוחה שלו.')),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text('יומנים', style: Theme.of(context).textTheme.titleMedium),
+                        child: Text(t('יומנים'), style: Theme.of(context).textTheme.titleMedium),
                       ),
                       for (final c in _calendars ?? <CalendarFeed>[])
                         ListTile(
                           leading: const Icon(Icons.calendar_month_outlined),
                           title: Text(c.name),
                           subtitle: Text(switch (c.upcoming) {
-                            null => c.error.isEmpty ? 'לא הצלחתי לקרוא את היומן' : c.error,
-                            0 => 'אין אירועים בחודש הקרוב · ${c.host}',
-                            final n => '$n אירועים בחודש הקרוב · ${c.host}',
+                            null => c.error.isEmpty ? t('לא הצלחתי לקרוא את היומן') : c.error,
+                            0 => t('אין אירועים בחודש הקרוב · {0}', [c.host]),
+                            final n => t('{0} אירועים בחודש הקרוב · {1}', [n, c.host]),
                           }),
                           trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                             IconButton(
-                                tooltip: 'שינוי שם ${c.name}',
+                                tooltip: t('שינוי שם {0}', [c.name]),
                                 icon: const Icon(Icons.edit_outlined),
                                 onPressed: () => _rename(c)),
                             IconButton(
-                                tooltip: 'הסרת ${c.name}',
+                                tooltip: t('הסרת {0}', [c.name]),
                                 icon: const Icon(Icons.delete_outline),
                                 onPressed: () => _remove(c)),
                           ]),
                         ),
-                      if (_calendars?.isEmpty ?? false) note('עוד אין יומנים.'),
+                      if (_calendars?.isEmpty ?? false) note(t('עוד אין יומנים.')),
                       ListTile(
                         leading: _busy
                             ? const SizedBox.square(
                                 dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
                             : const Icon(Icons.add),
-                        title: const Text('הוספת יומן'),
+                        title: Text(t('הוספת יומן')),
                         onTap: _busy ? null : _addCalendar,
                       ),
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: OutlinedButton.icon(
                           icon: const Icon(Icons.link_off),
-                          label: const Text('ניתוק המסך מהספר'),
+                          label: Text(t('ניתוק המסך מהספר')),
                           onPressed: _unlink,
                         ),
                       ),
                     ] else ...[
                       note(panel == PanelState.taken
-                          ? 'המסך מחובר כרגע לספר אחר. מי שחיבר אותו מנתק אותו שם, ואז המסך מציג קוד.'
-                          : 'לחצו על הכפתור במסך. הוא יציג קוד בן 6 ספרות, שתקף לרבע שעה.'),
+                          ? t('המסך מחובר כרגע לספר אחר. מי שחיבר אותו מנתק אותו שם, ואז המסך מציג קוד.')
+                          : t('לחצו על הכפתור במסך. הוא יציג קוד בן 6 ספרות, שתקף לרבע שעה.')),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: FilledButton.icon(
                           icon: const Icon(Icons.link),
-                          label: const Text('חיבור מסך עם קוד'),
+                          label: Text(t('חיבור מסך עם קוד')),
                           onPressed: _link,
                         ),
                       ),

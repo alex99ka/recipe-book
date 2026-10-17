@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import 'api.dart';
+import '../core/i18n.dart';
+import '../core/settings_store.dart';
 
 /// Settings › "ייצוא": the whole book, every recipe in full, with the book's
 /// own cookbooks. JSON keeps everything; CSV opens in Excel (one row a recipe).
@@ -42,7 +44,7 @@ Future<BookExport> exportBook({ValueNotifier<(int, int)>? progress}) async {
   });
   final titles = {for (final c in collections) c.id: c.title};
   final rows = [
-    ['מזהה', 'שם', 'שם במקור', 'דירוג', 'מנות', 'זמן', 'עלות משוערת', 'ספרים', 'תגיות', 'מצרכים', 'אופן הכנה', 'מקור'],
+    [t('מזהה'), t('שם'), t('שם במקור'), t('דירוג'), t('מנות'), t('זמן'), t('עלות משוערת'), t('ספרים'), t('תגיות'), t('מצרכים'), t('אופן הכנה'), t('מקור')],
     for (final r in recipes)
       [
         r.id,
@@ -73,21 +75,21 @@ String recipeText(Recipe r, List<String> lines) => [
       r.title,
       if (_meta(r).isNotEmpty) _meta(r),
       '',
-      'מצרכים',
+      t('מצרכים'),
       for (final l in lines) '• $l',
-      if (r.steps.isNotEmpty) ...['', 'אופן ההכנה', for (final (i, s) in r.steps.indexed) '${i + 1}. $s'],
-      if (r.sourceUrl.isNotEmpty) ...['', 'מקור: ${r.sourceUrl}'],
+      if (r.steps.isNotEmpty) ...['', t('אופן ההכנה'), for (final (i, s) in r.steps.indexed) '${i + 1}. $s'],
+      if (r.sourceUrl.isNotEmpty) ...['', t('מקור: {0}', [r.sourceUrl])],
     ].join('\n');
 
 String recipeMarkdown(Recipe r, List<String> lines) => [
       '# ${r.title}',
       if (_meta(r).isNotEmpty) ...['', _meta(r)],
       '',
-      '## מצרכים',
+      t('## מצרכים'),
       '',
       for (final l in lines) '- $l',
-      if (r.steps.isNotEmpty) ...['', '## אופן ההכנה', '', for (final (i, s) in r.steps.indexed) '${i + 1}. $s'],
-      if (r.sourceUrl.isNotEmpty) ...['', '[מקור](${r.sourceUrl})'],
+      if (r.steps.isNotEmpty) ...['', t('## אופן ההכנה'), '', for (final (i, s) in r.steps.indexed) '${i + 1}. $s'],
+      if (r.sourceUrl.isNotEmpty) ...['', t('[מקור]({0})', [r.sourceUrl])],
     ].join('\n');
 
 /// [font] needs Hebrew glyphs (the bundled Rubik); [photo] is left out when
@@ -110,7 +112,7 @@ Future<Uint8List> _recipePdf(Recipe r, List<String> lines, Uint8List font, Uint8
       child: pw.Text(t, style: const pw.TextStyle(fontSize: 15)));
   doc.addPage(pw.MultiPage(
     theme: pw.ThemeData.withFont(base: pw.Font.ttf(ByteData.sublistView(font))),
-    textDirection: pw.TextDirection.rtl,
+    textDirection: SettingsStore.instance.lang == 'he' ? pw.TextDirection.rtl : pw.TextDirection.ltr,
     crossAxisAlignment: pw.CrossAxisAlignment.stretch,
     build: (_) => [
       pw.Text(r.title, style: const pw.TextStyle(fontSize: 22)),
@@ -119,22 +121,22 @@ Future<Uint8List> _recipePdf(Recipe r, List<String> lines, Uint8List font, Uint8
         pw.Padding(
             padding: const pw.EdgeInsets.only(top: 10),
             child: pw.Image(image, height: 154, fit: pw.BoxFit.cover)),
-      h('מצרכים'),
+      h(t('מצרכים')),
       for (final l in lines)
         pw.Padding(padding: const pw.EdgeInsets.only(bottom: 4), child: pw.Text('•  $l')),
       if (r.steps.isNotEmpty) ...[
-        h('אופן ההכנה'),
+        h(t('אופן ההכנה')),
         for (final (i, s) in r.steps.indexed)
           pw.Padding(padding: const pw.EdgeInsets.only(bottom: 4), child: pw.Text('${i + 1}. $s')),
       ],
       if (r.sourceUrl.isNotEmpty)
         pw.Padding(
             padding: const pw.EdgeInsets.only(top: 14),
-            child: pw.Text('מקור: ${r.sourceUrl}', style: const pw.TextStyle(fontSize: 9))),
+            child: pw.Text(t('מקור: {0}', [r.sourceUrl]), style: const pw.TextStyle(fontSize: 9))),
     ],
   ));
   return doc.save();
 }
 
 String _meta(Recipe r) =>
-    [if (r.servings.isNotEmpty) '${r.servings} מנות', if (r.totalTime.isNotEmpty) r.totalTime].join(' · ');
+    [if (r.servings.isNotEmpty) t('{0} מנות', [r.servings]), if (r.totalTime.isNotEmpty) r.totalTime].join(' · ');

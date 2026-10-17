@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 
 import '../core/errors.dart';
 import 'api.dart';
+import '../core/i18n.dart';
 
 /// A friend's invite link (`…/invite/TOKEN`) that opened the app, waiting to
 /// be accepted once someone is signed in.
@@ -35,9 +36,8 @@ Future<String?> acceptPendingInvite() async {
   pendingInvite.value = null;
   try {
     final f = await Api.acceptInvite(token);
-    return 'עכשיו אתם חברים של ${f.name.isEmpty ? 'חבר חדש' : f.name}. '
-        'אפשר לשלוח זה לזה מתכונים וספרים שלמים.';
+    return t('עכשיו אתם חברים של {0}. אפשר לשלוח זה לזה מתכונים וספרים שלמים.', [f.name.isEmpty ? t('חבר חדש') : f.name]);
   } catch (e) {
-    return errorText(e, 'ההזמנה לא התקבלה');
+    return errorText(e, t('ההזמנה לא התקבלה'));
   }
 }

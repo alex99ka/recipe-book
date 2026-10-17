@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_info.dart';
+import 'i18n.dart';
 
 /// Marks a widget the tour can point at, by name. Several may carry the same
 /// name (the back arrow on every screen, a section in each tab): the tour
@@ -216,11 +217,11 @@ List<TourStep> whatsNew(String seen, String version) {
   if (steps.isEmpty) return const [];
   return [
     TourStep(
-      'מה חדש בגרסה $version',
-      'סיור קצר במה שנוסף. לוחצים על מה שמסומן, ואפשר לדלג בכל רגע.',
+      t('מה חדש בגרסה {0}', [version]),
+      t('סיור קצר במה שנוסף. לוחצים על מה שמסומן, ואפשר לדלג בכל רגע.'),
     ),
     ...steps,
-    const TourStep('זהו!', 'הסיור המלא נמצא תמיד בהגדרות > סיור באפליקציה.'),
+    TourStep(t('זהו!'), t('הסיור המלא נמצא תמיד בהגדרות > סיור באפליקציה.')),
   ];
 }
 
@@ -393,9 +394,9 @@ class _TourOverlayState extends State<TourOverlay> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(step.title, style: theme.textTheme.titleLarge),
+            Text(t(step.title), style: theme.textTheme.titleLarge),
             const SizedBox(height: 8),
-            Text(step.body, style: theme.textTheme.bodyLarge),
+            Text(t(step.body), style: theme.textTheme.bodyLarge),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -409,18 +410,18 @@ class _TourOverlayState extends State<TourOverlay> {
                 if (!last)
                   TextButton(
                     onPressed: widget.onDone,
-                    child: const Text('דילוג'),
+                    child: Text(t('דילוג')),
                   ),
                 // Not back over a tap: what it opened is open now.
                 if (_i > 0 && !widget.steps[_i - 1].tap)
                   TextButton(
                     onPressed: () => _go(_i - 1, back: true),
-                    child: const Text('הקודם'),
+                    child: Text(t('הקודם')),
                   ),
                 if (!tapHere)
                   FilledButton(
                     onPressed: last ? widget.onDone : () => _go(_i + 1),
-                    child: Text(last ? 'סיום' : 'הבא'),
+                    child: Text(last ? t('סיום') : t('הבא')),
                   ),
               ],
             ),

@@ -6,6 +6,7 @@ import '../core/errors.dart';
 import '../recipes/api.dart';
 import 'recipe_widgets.dart';
 import 'skeleton.dart';
+import '../core/i18n.dart';
 
 /// Friends get copies of recipes and cookbooks you send; they don't see your
 /// book or join your household. Invite by a single-use link. The same people
@@ -45,27 +46,27 @@ class _FriendsScreenState extends State<FriendsScreen> {
     try {
       url = await Api.createInvite();
     } catch (e) {
-      showError(_messenger, e, 'הקישור לא נוצר');
+      showError(_messenger, e, t('הקישור לא נוצר'));
       return;
     } finally {
       if (mounted) setState(() => _inviting = false);
     }
     if (!mounted) return;
-    final text = 'הזמנה לספר המתכונים שלי, כדי שנוכל לשלוח מתכונים זה לזה: $url';
+    final text = t('הזמנה לספר המתכונים שלי, כדי שנוכל לשלוח מתכונים זה לזה: {0}', [url]);
     await showDialog<void>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('קישור הזמנה'),
-        content: const Text('שלחו אותו לחבר. הוא תקף לשבוע ולחבר אחד.'),
+        title: Text(t('קישור הזמנה')),
+        content: Text(t('שלחו אותו לחבר. הוא תקף לשבוע ולחבר אחד.')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('סגירה')),
+          TextButton(onPressed: () => Navigator.pop(c), child: Text(t('סגירה'))),
           TextButton(
             onPressed: () async {
               Navigator.pop(c);
               await Clipboard.setData(ClipboardData(text: url));
-              _messenger.showSnackBar(const SnackBar(content: Text('הקישור הועתק')));
+              _messenger.showSnackBar(SnackBar(content: Text(t('הקישור הועתק'))));
             },
-            child: const Text('העתקת הקישור'),
+            child: Text(t('העתקת הקישור')),
           ),
           FilledButton(
             onPressed: () {
@@ -73,7 +74,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               launchUrl(Uri.parse('https://wa.me/?text=${Uri.encodeComponent(text)}'),
                   mode: LaunchMode.externalApplication);
             },
-            child: const Text('וואטסאפ'),
+            child: Text(t('וואטסאפ')),
           ),
         ],
       ),
@@ -84,11 +85,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final yes = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: Text('להסיר את ${f.name}?'),
-        content: const Text('מה שכבר שלחתם זה לזה נשאר אצל כל אחד.'),
+        title: Text(t('להסיר את {0}?', [f.name])),
+        content: Text(t('מה שכבר שלחתם זה לזה נשאר אצל כל אחד.')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('ביטול')),
-          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('הסרה')),
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(t('ביטול'))),
+          FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(t('הסרה'))),
         ],
       ),
     );
@@ -97,7 +98,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       await Api.removeFriend(f.uid);
       if (mounted) setState(() => _friends = [..._friends!.where((x) => x.uid != f.uid)]);
     } catch (e) {
-      showError(_messenger, e, 'החבר לא הוסר');
+      showError(_messenger, e, t('החבר לא הוסר'));
     }
   }
 
@@ -106,15 +107,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final friends = _friends;
     final muted = TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant);
     return Scaffold(
-      appBar: AppBar(title: const Text('חברים')),
+      appBar: AppBar(title: Text(t('חברים'))),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Text(
-                'לחברים שולחים מתכון או ספר שלם, והם מקבלים עותק משלהם. '
-                'הם לא רואים את הספר שלכם ולא מצטרפים לבית.',
+                t('לחברים שולחים מתכון או ספר שלם, והם מקבלים עותק משלהם. הם לא רואים את הספר שלכם ולא מצטרפים לבית.'),
                 style: muted),
           ),
           Padding(
@@ -122,7 +122,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             child: FilledButton.icon(
               onPressed: _inviting ? null : _invite,
               icon: const Icon(Icons.person_add_outlined),
-              label: const Text('הזמנת חבר'),
+              label: Text(t('הזמנת חבר')),
             ),
           ),
           if (_error != null && friends == null)
@@ -132,7 +132,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           else if (friends.isEmpty)
             Padding(
               padding: const EdgeInsets.all(32),
-              child: Text('עוד אין לכם חברים. הזמינו מישהו בקישור.',
+              child: Text(t('עוד אין לכם חברים. הזמינו מישהו בקישור.'),
                   textAlign: TextAlign.center, style: muted),
             )
           else
@@ -140,9 +140,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ListTile(
                 leading: Icon(f.mate ? Icons.home_outlined : Icons.person_outline),
                 title: Text(f.name),
-                subtitle: f.mate ? const Text('מהבית') : null,
+                subtitle: f.mate ? Text(t('מהבית')) : null,
                 trailing: f.mate ? null : IconButton(
-                  tooltip: 'הסרת ${f.name}',
+                  tooltip: t('הסרת {0}', [f.name]),
                   icon: const Icon(Icons.person_remove_outlined),
                   onPressed: () => _remove(f),
                 ),

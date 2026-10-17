@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'server.dart';
+
 /// Per-device choices that change how the app looks.
 class SettingsStore extends ChangeNotifier {
   SettingsStore._();
@@ -15,6 +17,9 @@ class SettingsStore extends ChangeNotifier {
   /// Off: the screen stays upright even when the phone or tablet is turned.
   bool rotate = true;
 
+  /// 'he', 'ru' or 'en': the app's words, and the recipes the server sends.
+  String lang = 'he';
+
   Future<void> load() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -23,6 +28,8 @@ class SettingsStore extends ChangeNotifier {
           orElse: () => ThemeMode.system);
       beta = prefs.getBool('beta') ?? true;
       rotate = prefs.getBool('rotate') ?? true;
+      lang = prefs.getString('lang') ?? 'he';
+      _applyLang();
     } catch (_) {}
     _applyRotate();
   }
@@ -30,6 +37,18 @@ class SettingsStore extends ChangeNotifier {
   // An empty list lets the system (and its own rotation lock) decide.
   void _applyRotate() => SystemChrome.setPreferredOrientations(
       rotate ? const [] : const [DeviceOrientation.portraitUp]).ignore();
+
+  // Hebrew is the server's default, so it needs no header.
+  void _applyLang() => lang == 'he' ? serverHeaders.remove('X-Lang') : serverHeaders['X-Lang'] = lang;
+
+  Future<void> setLang(String code) async {
+    lang = code;
+    _applyLang();
+    notifyListeners();
+    try {
+      await (await SharedPreferences.getInstance()).setString('lang', code);
+    } catch (_) {}
+  }
 
   Future<void> setRotate(bool on) async {
     rotate = on;

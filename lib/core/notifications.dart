@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'errors.dart';
 import 'server.dart';
+import 'i18n.dart';
 
 /// Pushes come from the home server (push.py), which keeps each device's
 /// token and the per-type switches. Android and the web get them; Windows has
@@ -50,7 +51,7 @@ Future<void> setUpNotifications(
       if (n == null) return;
       _messenger?.showSnackBar(SnackBar(
         content: Text('${n.title}\n${n.body ?? ''}'),
-        action: SnackBarAction(label: 'פתיחה', onPressed: () => _onOpen?.call(m.data)),
+        action: SnackBarAction(label: t('פתיחה'), onPressed: () => _onOpen?.call(m.data)),
       ));
     });
     if (!kIsWeb) {
@@ -87,9 +88,9 @@ Future<String> enableWebNotifications() async {
     if (s.authorizationStatus != AuthorizationStatus.authorized) {
       return errorText(Errors.notificationsBlocked);
     }
-    final t = await FirebaseMessaging.instance.getToken();
-    if (t != null) await _register(t);
-    return 'ההתראות פעילות במכשיר הזה.';
+    final token = await FirebaseMessaging.instance.getToken();
+    if (token != null) await _register(token);
+    return t('ההתראות פעילות במכשיר הזה.');
   } catch (_) {
     return errorText(Errors.notificationsNeedHomeScreen);
   }

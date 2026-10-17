@@ -2,12 +2,13 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../core/i18n.dart';
 
 /// A picked file as the server upload takes it: its bytes and its name.
 typedef Picked = (List<int>, String);
 
-const _images = XTypeGroup(
-    label: 'תמונות', extensions: ['jpg', 'jpeg', 'png', 'webp', 'heic'], mimeTypes: ['image/*']);
+XTypeGroup get _images => XTypeGroup(
+    label: t('תמונות'), extensions: ['jpg', 'jpeg', 'png', 'webp', 'heic'], mimeTypes: ['image/*']);
 const _pdf = XTypeGroup(label: 'PDF', extensions: ['pdf'], mimeTypes: ['application/pdf']);
 
 bool get _android => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
@@ -22,16 +23,16 @@ Future<Picked?> pickPhoto(BuildContext context, {bool pdf = false}) async {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         ListTile(
             leading: const Icon(Icons.photo_camera_outlined),
-            title: const Text('צילום'),
+            title: Text(t('צילום')),
             onTap: () => Navigator.pop(c, 'camera')),
         ListTile(
             leading: const Icon(Icons.photo_library_outlined),
-            title: const Text('מהגלריה'),
+            title: Text(t('מהגלריה')),
             onTap: () => Navigator.pop(c, 'gallery')),
         if (pdf)
           ListTile(
               leading: const Icon(Icons.picture_as_pdf_outlined),
-              title: const Text('קובץ PDF'),
+              title: Text(t('קובץ PDF')),
               onTap: () => Navigator.pop(c, 'pdf')),
       ]),
     ),
