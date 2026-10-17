@@ -9,6 +9,8 @@ Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app, archived).
 
 ## [Unreleased]
 
+## [5.8.0] - 2026-10-17
+
 ### Added
 - למנהל: הגדרות › "ניהול משתמשים": כל החשבונות, הספרים שלהם, כמה מתכונים נוספו החודש, וחסימה.
 
