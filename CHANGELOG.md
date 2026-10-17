@@ -9,6 +9,9 @@ Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app, archived).
 
 ## [Unreleased]
 
+### Fixed
+- גרסאות בדיקה מגיעות מיד למי שמקבל אותן, במקום עד 6 שעות אחרי הפתיחה.
+
 ## [5.6.0] - 2026-10-17
 
 ### Added
