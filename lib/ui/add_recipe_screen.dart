@@ -156,7 +156,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           Text(t('להוסיף גם לספרים'), style: Theme.of(context).textTheme.titleSmall),
           for (final c in _collections)
             CheckboxListTile(
-              title: Text(c.title),
+              title: Text(Api.label(c.title)),
               value: _chosen.contains(c.id),
               onChanged: _busy ? null : (v) => setState(() => v! ? _chosen.add(c.id!) : _chosen.remove(c.id)),
             ),

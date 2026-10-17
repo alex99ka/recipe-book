@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app_info.dart';
 import 'errors.dart';
 import 'server.dart';
+import 'i18n.dart';
 
 /// One line of Settings › "מצב המערכת". [ok] null = not applicable.
 class Check {
@@ -26,12 +27,12 @@ Future<List<Check>> runDiagnostics() async {
   final prefs = await SharedPreferences.getInstance();
   final lastUpdate = prefs.getString('update_last_check')?.split('|');
   final checks = <Check>[
-    Check('גרסה', '${AppInfo.versionLabel} · ${AppInfo.platform}'),
-    Check('חשבון', user?.email ?? 'לא מחובר', ok: user != null),
+    Check(t('גרסה'), '${AppInfo.versionLabel} · ${AppInfo.platform}'),
+    Check(t('חשבון'), user?.email ?? t('לא מחובר'), ok: user != null),
     Check(
-      'בדיקת עדכונים אחרונה',
+      t('בדיקת עדכונים אחרונה'),
       lastUpdate == null
-          ? 'עוד לא נבדק'
+          ? t('עוד לא נבדק')
           : '${lastUpdate.first.substring(0, 16).replaceFirst('T', ' ')} · ${lastUpdate.last}',
     ),
   ];
@@ -39,22 +40,22 @@ Future<List<Check>> runDiagnostics() async {
   if (hasServer) {
     try {
       final h = await server('GET', '/health');
-      checks.add(const Check('השרת בבית', 'עונה', ok: true));
+      checks.add(Check(t('השרת בבית'), t('עונה'), ok: true));
       final backup = h['last_backup'] as String?;
       // The Pi's nightly Drive backup (backup.py) records it; null on an older server.
       if (backup != null) {
         final fresh = DateTime.now().difference(DateTime.parse(backup)).inHours < 36;
-        checks.add(Check('גיבוי אחרון', backup.substring(0, 16), ok: fresh));
+        checks.add(Check(t('גיבוי אחרון'), backup.substring(0, 16), ok: fresh));
       }
     } catch (e) {
       final error = classify(e);
-      checks.add(Check('השרת בבית', '${error.why} (קוד ${error.code})', ok: false));
+      checks.add(Check(t('השרת בבית'), t('{0} (קוד {1})', [t(error.why), error.code]), ok: false));
     }
   }
 
   final errors = await recentErrors();
-  checks.add(Check('שגיאות אחרונות',
-      errors.isEmpty ? 'אין' : '${errors.length}, האחרונה: ${errors.first}',
+  checks.add(Check(t('שגיאות אחרונות'),
+      errors.isEmpty ? t('אין') : t('{0}, האחרונה: {1}', [errors.length, errors.first]),
       ok: errors.isEmpty ? true : null));
   return checks;
 }

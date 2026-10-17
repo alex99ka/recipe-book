@@ -81,7 +81,7 @@ class _CookbookScreenState extends State<CookbookScreen> {
     final recipes = _recipes;
     final own = widget.shelf.id != null;
     return Scaffold(
-      appBar: AppBar(title: Text(_title), actions: [
+      appBar: AppBar(title: Text(Api.label(_title)), actions: [
         if (own)
           PopupMenuButton<VoidCallback>(
             tooltip: t('עוד'),
@@ -90,7 +90,7 @@ class _CookbookScreenState extends State<CookbookScreen> {
               PopupMenuItem(value: _rename, child: Text(t('שינוי שם'))),
               PopupMenuItem(
                 value: () => sendToFriend(context,
-                    title: _title, send: (to, note) => Api.sendCollection(widget.shelf.id!, to, note)),
+                    title: Api.label(_title), send: (to, note) => Api.sendCollection(widget.shelf.id!, to, note)),
                 child: Text(t('שליחה לחבר')),
               ),
               PopupMenuItem(value: _delete, child: Text(t('מחיקת הספר'))),

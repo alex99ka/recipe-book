@@ -53,7 +53,7 @@ class _InboxScreenState extends State<InboxScreen> {
       final yes = await showDialog<bool>(
         context: context,
         builder: (c) => AlertDialog(
-          title: Text(t('למחוק את „{0}”?', [i.title])),
+          title: Text(t('למחוק את „{0}”?', [Api.label(i.title)])),
           content: Text(i.collectionId != null
               ? t('הספר וכל המתכונים שהגיעו איתו יימחקו מהספר שלכם.')
               : t('המתכון יימחק מהספר שלכם.')),
@@ -99,7 +99,7 @@ class _InboxScreenState extends State<InboxScreen> {
                         margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                           ListTile(
-                            title: Text(i.title),
+                            title: Text(Api.label(i.title)),
                             subtitle: Text([
                               t('{0} · מאת {1}', [i.collectionId != null ? t('ספר עם {0} מתכונים', [i.count]) : t('מתכון'), i.from]),
                               if (i.note.isNotEmpty) '„${i.note}”',

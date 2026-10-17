@@ -101,7 +101,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
               if (all.isEmpty) Text(t('עוד אין ספרים משלכם. התחילו ספר חדש:')),
               for (final c in all)
                 CheckboxListTile(
-                  title: Text(c.title),
+                  title: Text(Api.label(c.title)),
                   value: chosen.contains(c.id),
                   onChanged: (v) => set(() => v! ? chosen.add(c.id!) : chosen.remove(c.id)),
                 ),
@@ -287,8 +287,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
             Wrap(spacing: 8, runSpacing: 8, children: [
               for (final tag in r.allTags)
                 ActionChip(
-                  label: Text(tag),
-                  tooltip: t('כל המתכונים עם {0}', [tag]),
+                  label: Text(Api.label(tag)),
+                  tooltip: t('כל המתכונים עם {0}', [Api.label(tag)]),
                   onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute<void>(

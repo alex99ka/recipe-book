@@ -102,6 +102,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
   }
 
+  /// A name for them that only I see ("אמא"); empty = the name they chose.
+  Future<void> _alias(Friend f) async {
+    final alias = await askTitle(context, t('כינוי ל{0}', [f.chosen]),
+        initial: f.alias, ok: t('שמירה'), hint: t('רק אתם רואים אותו. ריק = השם שבחרו'),
+        allowEmpty: true);
+    if (alias == null || alias == f.alias || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await Api.setAlias(f.uid, alias);
+      await _load();
+    } catch (e) {
+      showError(messenger, e, t('הכינוי לא נשמר'));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final friends = _friends;
@@ -140,7 +155,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ListTile(
                 leading: Icon(f.mate ? Icons.home_outlined : Icons.person_outline),
                 title: Text(f.name),
-                subtitle: f.mate ? Text(t('מהבית')) : null,
+                // With an alias, the name they chose too, so it's clear who it is.
+                subtitle: f.mate || f.alias.isNotEmpty
+                    ? Text([if (f.alias.isNotEmpty) f.chosen, if (f.mate) t('מהבית')].join(' · '))
+                    : null,
+                onTap: () => _alias(f),
                 trailing: f.mate ? null : IconButton(
                   tooltip: t('הסרת {0}', [f.name]),
                   icon: const Icon(Icons.person_remove_outlined),

@@ -106,9 +106,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (steps != null && steps.isNotEmpty) {
       runningTour.value = steps;
     } else if (steps != null && AppConfig.releaseNotes.isNotEmpty) {
+      final notes = await Api.releaseNotes();
       messenger.showSnackBar(SnackBar(
         duration: const Duration(seconds: 8),
-        content: Text(t('מה חדש בגרסה {0}: {1}', [AppInfo.version, AppConfig.releaseNotes])),
+        content: Text(t('מה חדש בגרסה {0}: {1}', [AppInfo.version, notes])),
       ));
     }
   }
@@ -147,6 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Api.recipes(q: q, tag: _tag),
         if (browsing) Api.collections(),
         if (browsing) Api.cookbooks(),
+        if (browsing) Api.loadLabels(),
       ]);
       if (seq != _loads || !mounted) return; // a newer search started meanwhile
       setState(() {
@@ -188,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Long-press on one of the book's own cookbooks.
   Future<void> _shelfMenu(Shelf s) async {
-    final pick = await showItemMenu(context, s.title, [
+    final pick = await showItemMenu(context, Api.label(s.title), [
       (Icons.open_in_new, t('פתיחה')),
       (Icons.edit_outlined, t('שינוי שם')),
       (Icons.send_outlined, t('שליחה לחבר')),
@@ -216,10 +218,10 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       case 2:
         await sendToFriend(context,
-            title: s.title, send: (to, note) => Api.sendCollection(s.id!, to, note));
+            title: Api.label(s.title), send: (to, note) => Api.sendCollection(s.id!, to, note));
       case 3:
         await deleteWithUndo(messenger,
-            said: t('הספר „{0}” נמחק. המתכונים שבו נשארו.', [s.title]),
+            said: t('הספר „{0}” נמחק. המתכונים שבו נשארו.', [Api.label(s.title)]),
             hide: () => hidden(true),
             restore: () => hidden(false),
             delete: () => Api.deleteCollection(s.id!),
@@ -350,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 4),
                                       child: FilterChip(
-                                        label: Text(t),
+                                        label: Text(Api.label(t)),
                                         selected: _tag == t,
                                         onSelected: (on) {
                                           setState(() => _tag = on ? t : null);
@@ -389,7 +391,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                         _Header(_browsing
                             ? (_all ? t('כל המתכונים ({0})', [recipes!.length]) : t('נוספו לאחרונה'))
-                            : _tag != null && _q.isEmpty ? t('תגית: {0}', [_tag]) : t('תוצאות')),
+                            : _tag != null && _q.isEmpty ? t('תגית: {0}', [Api.label(_tag!)]) : t('תוצאות')),
                         if (shown.isEmpty)
                           Padding(
                             padding: const EdgeInsets.all(48),
@@ -478,7 +480,7 @@ class _ShelfCard extends StatelessWidget {
                 child: NetImage(shelf?.cover, width: 104, height: 140, icon: icon),
               ),
               const SizedBox(height: 4),
-              Text(label ?? shelf!.title,
+              Text(label ?? Api.label(shelf!.title),
                   maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
               if (shelf != null)
                 Text('${shelf!.count}', style: Theme.of(context).textTheme.bodySmall),

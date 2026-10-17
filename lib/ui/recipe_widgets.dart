@@ -91,7 +91,7 @@ class RecipeTile extends StatelessWidget {
           child: NetImage(r.image, width: 56, height: 56),
         ),
         title: Text(r.title),
-        subtitle: r.tags.isEmpty ? null : Text(r.tags.join(' · ')),
+        subtitle: r.tags.isEmpty ? null : Text(r.tags.map(Api.label).join(' · ')),
         trailing: r.rating == null ? null : Text('★ ${pretty1(r.rating!)}'),
         onTap: () => _open(context),
       );
@@ -137,7 +137,7 @@ class LoadError extends StatelessWidget {
 
 /// A cookbook's title ("ספר מתכונים חדש", or renaming one), or null when cancelled.
 Future<String?> askTitle(BuildContext context, String header,
-    {String initial = '', String? ok}) async {
+    {String initial = '', String? ok, String? hint, bool allowEmpty = false}) async {
   final c = TextEditingController(text: initial);
   final title = await showDialog<String>(
     context: context,
@@ -146,8 +146,8 @@ Future<String?> askTitle(BuildContext context, String header,
       content: TextField(
         controller: c,
         autofocus: true,
-        maxLength: 80,
-        decoration: InputDecoration(hintText: t('למשל: ארוחות שישי')),
+        maxLength: allowEmpty ? 40 : 80,
+        decoration: InputDecoration(hintText: hint ?? t('למשל: ארוחות שישי')),
         onSubmitted: (v) => Navigator.pop(ctx, v),
       ),
       actions: [
@@ -156,7 +156,9 @@ Future<String?> askTitle(BuildContext context, String header,
       ],
     ),
   );
-  return title?.trim().isEmpty ?? true ? null : title!.trim();
+  if (title == null) return null;
+  // A name can be cleared on purpose ('' = back to the default); a book title can't.
+  return title.trim().isEmpty && !allowEmpty ? null : title.trim();
 }
 
 /// A delete that can be taken back: [hide] at once, a 5-second toast with

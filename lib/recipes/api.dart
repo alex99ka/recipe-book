@@ -103,6 +103,10 @@ extension type Friend(Map<String, dynamic> j) {
   String get uid => j['uid'] as String;
   String get name => j['name'] as String? ?? '';
 
+  /// The name they chose for themselves, and the one I gave them ('' for none).
+  String get chosen => j['chosen'] as String? ?? name;
+  String get alias => j['alias'] as String? ?? '';
+
   /// In the household: shares the book already, so never sent to or removed.
   bool get mate => j['mate'] as bool? ?? false;
 }
@@ -185,6 +189,48 @@ abstract final class Api {
   /// Images and covers come as signed paths under the server (`/api/v1/...`).
   static String? imageUrl(String? path) =>
       path == null ? null : Uri.parse(AppConfig.serverUrl).resolve(path).toString();
+
+  // ---- the app's language ----
+
+  /// Tags, categories and book names in the app's language, by the original.
+  /// The originals stay what is filtered by and edited; only the screen shows these.
+  static Map<String, String> labels = {};
+
+  static String label(String original) => labels[original] ?? original;
+
+  static Future<void> loadLabels() async {
+    try {
+      labels = {
+        for (final e in (await cached('labels', () => server('GET', '/labels')) as Map).entries)
+          '${e.key}': '${e.value}'
+      };
+    } catch (_) {} // the originals will do
+  }
+
+  /// This version's release notes in the app's language; the Hebrew when that fails.
+  static Future<String> releaseNotes() async {
+    final notes = AppConfig.releaseNotes;
+    if (notes.isEmpty || serverHeaders['X-Lang'] == null) return notes;
+    try {
+      final j = await server('POST', '/translate', {'texts': [notes]}) as Map;
+      return '${j[notes] ?? notes}';
+    } catch (_) {
+      return notes;
+    }
+  }
+
+  // ---- names ----
+
+  /// The name friends see; '' goes back to the Google name.
+  static Future<void> setDisplayName(String name) async {
+    RemoteConfig.instance.me = await server('PATCH', '/me', {'displayName': name}) as Map<String, dynamic>;
+  }
+
+  static String get displayName => RemoteConfig.instance.me?['displayName'] as String? ?? '';
+
+  /// A name for a friend only I see; '' takes it away.
+  static Future<void> setAlias(String uid, String alias) =>
+      server('PUT', '/friends/${_q(uid)}/alias', {'alias': alias});
 
   // ---- reading ----
 

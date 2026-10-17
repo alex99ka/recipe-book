@@ -25,6 +25,7 @@ import 'export_dialog.dart';
 import 'friends_screen.dart';
 import 'panel_screen.dart';
 import 'pick.dart';
+import 'recipe_widgets.dart';
 import 'skeleton.dart';
 import '../core/i18n.dart';
 
@@ -139,16 +140,32 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  void _whatsNew() {
+  Future<void> _whatsNew() async {
     // This version's own steps, else its release notes as one card.
     final steps = whatsNew(AppInfo.previousVersion(), AppInfo.version);
+    final notes = steps.isEmpty ? await Api.releaseNotes() : '';
+    if (!mounted) return;
     Navigator.pop(context);
     runningTour.value = steps.isNotEmpty
         ? steps
         : [
             TourStep(t('מה חדש בגרסה {0}', [AppInfo.version]),
-                AppConfig.releaseNotes.isEmpty ? t('תיקונים ושיפורים.') : AppConfig.releaseNotes),
+                notes.isEmpty ? t('תיקונים ושיפורים.') : notes),
           ];
+  }
+
+  Future<void> _myName() async {
+    final google = FirebaseAuth.instance.currentUser?.displayName ?? '';
+    final name = await askTitle(context, t('השם שלי'),
+        initial: Api.displayName.isEmpty ? google : Api.displayName,
+        ok: t('שמירה'), hint: t('ריק = השם מחשבון Google'), allowEmpty: true);
+    if (name == null || !mounted) return;
+    try {
+      await Api.setDisplayName(name == google ? '' : name);
+      if (mounted) setState(() {});
+    } catch (e) {
+      showError(_messenger, e, t('השם לא נשמר'));
+    }
   }
 
   @override
@@ -173,7 +190,7 @@ class _SettingsPageState extends State<SettingsPage> {
               },
               child: Column(children: [
                 for (final b in Api.books)
-                  RadioListTile<String>(title: Text(b.title), value: b.key),
+                  RadioListTile<String>(title: Text(Api.label(b.title)), value: b.key),
               ]),
             ),
           ),
@@ -314,9 +331,14 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
 
         _Section(t('תצוגה')),
+        // In all three at once, so it can be found from any of them.
+        const ListTile(
+          leading: Icon(Icons.translate),
+          title: Text('שפה · Язык · Language'),
+        ),
         // Each language in its own words, so the way back is readable.
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: SegmentedButton<String>(
             segments: [
               for (final e in languages.entries) ButtonSegment(value: e.key, label: Text(e.value)),
@@ -400,6 +422,13 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ],
         _Section(t('חשבון')),
+        ListTile(
+          leading: const Icon(Icons.badge_outlined),
+          title: Text(t('השם שלי')),
+          subtitle: Text(t('{0} · כך חברים רואים אותך',
+              [Api.displayName.isEmpty ? user?.displayName ?? '' : Api.displayName])),
+          onTap: _myName,
+        ),
         ListTile(
           leading: const Icon(Icons.account_circle_outlined),
           title: Text(user?.displayName ?? ''),
