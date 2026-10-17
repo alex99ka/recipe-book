@@ -9,6 +9,11 @@ Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app, archived).
 
 ## [Unreleased]
 
+## [5.10.0] - 2026-10-17
+
+### Added
+- ייצוא מתכון: כפתור השיתוף בראש המתכון שומר אותו כ-PDF עם התמונה, כקובץ טקסט או כ-Markdown. הכמויות כמו שמוצגות (×1/×2/×3).
+
 ## [5.9.0] - 2026-10-17
 
 ### Added

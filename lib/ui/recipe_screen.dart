@@ -8,6 +8,7 @@ import '../recipes/offline.dart';
 import '../recipes/scaling.dart';
 import 'cookbook_screen.dart';
 import 'edit_recipe_screen.dart';
+import 'export_dialog.dart';
 import 'recipe_comments.dart';
 import 'recipe_widgets.dart';
 import 'send_dialog.dart';
@@ -308,6 +309,11 @@ class _RecipeScreenState extends State<RecipeScreen> {
           ];
     return Scaffold(
       appBar: AppBar(title: Text(r?.title ?? widget.title), actions: [
+        if (r != null)
+          IconButton(
+              tooltip: 'ייצוא (PDF, טקסט, Markdown)',
+              icon: const Icon(Icons.ios_share),
+              onPressed: () => exportRecipeFile(context, r, _lines)),
         if (r != null)
           TourTarget(
             'recipe.edit',
