@@ -107,6 +107,20 @@ extension type Friend(Map<String, dynamic> j) {
   bool get mate => j['mate'] as bool? ?? false;
 }
 
+/// An account, on the admin screen.
+extension type AdminUser(Map<String, dynamic> j) {
+  String get uid => j['uid'] as String;
+  String get name => j['name'] as String? ?? '';
+  String get email => j['email'] as String? ?? '';
+  bool get blocked => j['blocked'] as bool? ?? false;
+  bool get admin => j['admin'] as bool? ?? false;
+  DateTime get firstSeen => DateTime.parse(j['firstSeen'] as String).toLocal();
+  DateTime get lastSeen => DateTime.parse(j['lastSeen'] as String).toLocal();
+
+  /// The books it reads: {title, recipes, createdThisMonth}.
+  List<Map<String, dynamic>> get books => (j['books'] as List).cast<Map<String, dynamic>>();
+}
+
 /// Something a friend sent. The copies are already in the book.
 extension type InboxItem(Map<String, dynamic> j) {
   int get id => j['id'] as int;
@@ -305,6 +319,16 @@ abstract final class Api {
       Friend(await server('POST', '/friends/invites/${_q(token)}/accept') as Map<String, dynamic>);
 
   static Future<void> removeFriend(String uid) => server('DELETE', '/friends/${_q(uid)}');
+
+  // ---- admin ----
+
+  static bool get isAdmin => RemoteConfig.instance.me?['admin'] == true;
+
+  static Future<List<AdminUser>> adminUsers() async =>
+      [for (final u in await server('GET', '/admin/users') as List) AdminUser(u as Map<String, dynamic>)];
+
+  static Future<void> setBlocked(String uid, bool blocked) =>
+      server('PUT', '/admin/users/${_q(uid)}/blocked', {'blocked': blocked});
 
   static Future<List<InboxItem>> inbox() async =>
       [for (final i in await server('GET', '/inbox') as List) InboxItem(i as Map<String, dynamic>)];

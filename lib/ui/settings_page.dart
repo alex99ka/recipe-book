@@ -20,6 +20,7 @@ import '../core/tour.dart';
 import '../core/update.dart';
 import '../core/web_update.dart';
 import '../recipes/api.dart';
+import 'admin_screen.dart';
 import 'export_dialog.dart';
 import 'friends_screen.dart';
 import 'panel_screen.dart';
@@ -370,6 +371,16 @@ class _SettingsPageState extends State<SettingsPage> {
               MaterialPageRoute<void>(builder: (_) => const DiagnosticsPage())),
         ),
 
+        if (Api.isAdmin) ...[
+          _Section('ניהול'),
+          ListTile(
+            leading: const Icon(Icons.admin_panel_settings_outlined),
+            title: const Text('ניהול משתמשים'),
+            subtitle: const Text('מי נכנס, הספרים שלהם, וחסימה'),
+            onTap: () => Navigator.push(
+                context, MaterialPageRoute<void>(builder: (_) => const AdminScreen())),
+          ),
+        ],
         _Section('חשבון'),
         ListTile(
           leading: const Icon(Icons.account_circle_outlined),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:recipe_book/recipes/api.dart';
 import 'package:recipe_book/ui/add_recipe_screen.dart';
+import 'package:recipe_book/ui/admin_screen.dart';
 import 'package:recipe_book/ui/edit_recipe_screen.dart';
 import 'package:recipe_book/ui/friends_screen.dart';
 import 'package:recipe_book/ui/inbox_screen.dart';
@@ -76,6 +77,7 @@ void main() {
     ('friends', const FriendsScreen()),
     ('inbox', const InboxScreen()),
     ('screen', const PanelScreen()),
+    ('admin', const AdminScreen()),
   ]) {
     testWidgets('$name builds and shows a load error without a server', (t) async {
       await pump(t, screen);
