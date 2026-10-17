@@ -38,6 +38,9 @@ extension type Shelf(Map<String, dynamic> j) {
   String get title => j['title'] as String? ?? '';
   String? get cover => j['cover'] as String?;
   int get count => j['count'] as int? ?? 0;
+
+  /// A photo someone chose, not the newest recipe's.
+  bool get customCover => j['customCover'] as bool? ?? false;
 }
 
 extension type PriceLine(Map<String, dynamic> j) {
@@ -276,6 +279,12 @@ abstract final class Api {
 
   static Future<void> renameCollection(int id, String title) =>
       server('PATCH', '/collections/$id', {'title': title});
+
+  static Future<void> setCollectionCover(int id, (List<int>, String) photo) =>
+      serverUpload('PUT', '/collections/$id/cover', files: {'photo': photo});
+
+  /// Back to the newest recipe's photo.
+  static Future<void> resetCollectionCover(int id) => server('DELETE', '/collections/$id/cover');
 
   /// The cookbook only; its recipes stay in the book.
   static Future<void> deleteCollection(int id) => server('DELETE', '/collections/$id');

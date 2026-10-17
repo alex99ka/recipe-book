@@ -18,6 +18,7 @@ import 'add_recipe_screen.dart';
 import 'recipe_screen.dart';
 import 'cookbook_screen.dart';
 import 'inbox_screen.dart';
+import 'pick.dart';
 import 'recipe_widgets.dart';
 import 'send_dialog.dart';
 import 'settings_page.dart';
@@ -51,6 +52,9 @@ class _HomeScreenState extends State<HomeScreen> {
   int _loads = 0;
 
   List<Summary>? _recipes;
+
+  /// The home screen shows the latest 30 until "all recipes" is tapped.
+  bool _all = false;
   List<Shelf> _collections = [];
   List<Shelf> _cookbooks = [];
   Object? _error;
@@ -183,11 +187,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Long-press on one of the book's own cookbooks.
   Future<void> _shelfMenu(Shelf s) async {
-    final pick = await showItemMenu(context, s.title, const [
+    final pick = await showItemMenu(context, s.title, [
       (Icons.open_in_new, 'פתיחה'),
       (Icons.edit_outlined, 'שינוי שם'),
       (Icons.send_outlined, 'שליחה לחבר'),
       (Icons.delete_outline, 'מחיקת הספר'),
+      (Icons.image_outlined, 'תמונת שער'),
+      if (s.customCover) (Icons.hide_image_outlined, 'שער לפי המתכון האחרון'),
     ]);
     if (!mounted || pick == null) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -218,6 +224,22 @@ class _HomeScreenState extends State<HomeScreen> {
             delete: () => Api.deleteCollection(s.id!),
             failed: 'הספר לא נמחק');
         await _load();
+      case 4:
+        final p = await pickPhoto(context);
+        if (p == null) return;
+        try {
+          await Api.setCollectionCover(s.id!, p);
+          await _load();
+        } catch (e) {
+          showError(messenger, e, 'התמונה לא הועלתה');
+        }
+      case 5:
+        try {
+          await Api.resetCollectionCover(s.id!);
+          await _load();
+        } catch (e) {
+          showError(messenger, e, 'השער לא שונה');
+        }
     }
   }
 
@@ -230,7 +252,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final recipes = _recipes;
-    final shown = recipes == null ? null : (_browsing ? recipes.take(30).toList() : recipes);
+    final shown =
+        recipes == null ? null : (_browsing && !_all ? recipes.take(30).toList() : recipes);
     return Scaffold(
       appBar: AppBar(
         title: _searching
@@ -362,7 +385,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ],
-                        _Header(_browsing ? 'נוספו לאחרונה' : _tag != null && _q.isEmpty ? 'תגית: $_tag' : 'תוצאות'),
+                        _Header(_browsing
+                            ? (_all ? 'כל המתכונים (${recipes!.length})' : 'נוספו לאחרונה')
+                            : _tag != null && _q.isEmpty ? 'תגית: $_tag' : 'תוצאות'),
                         if (shown.isEmpty)
                           Padding(
                             padding: const EdgeInsets.all(48),
@@ -373,6 +398,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           i == 0
                               ? TourTarget('home.first', child: RecipeTile(r, onBack: _load))
                               : RecipeTile(r, onBack: _load),
+                        if (_browsing && shown.length < recipes!.length)
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: OutlinedButton.icon(
+                              onPressed: () => setState(() => _all = true),
+                              icon: const Icon(Icons.expand_more),
+                              label: Text('כל המתכונים (${recipes.length})'),
+                            ),
+                          ),
                         const SizedBox(height: 88), // clear of the add button
                       ]),
                     ),
