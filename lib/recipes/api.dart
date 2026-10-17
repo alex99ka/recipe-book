@@ -290,8 +290,9 @@ abstract final class Api {
   static Future<void> deleteCollection(int id) => server('DELETE', '/collections/$id');
 
   /// A copy of the whole cookbook into the friend's book.
+  /// Copies every recipe while you wait: up to 100, so the slow deadline.
   static Future<void> sendCollection(int id, String to, String note) =>
-      server('POST', '/collections/$id/send', {'to': to, 'note': note});
+      server('POST', '/collections/$id/send', {'to': to, 'note': note}, slowCall);
 
   // ---- friends and the inbox ----
 
