@@ -99,6 +99,9 @@ extension type Comments(Map<String, dynamic> j) {
 extension type Friend(Map<String, dynamic> j) {
   String get uid => j['uid'] as String;
   String get name => j['name'] as String? ?? '';
+
+  /// In the household: shares the book already, so never sent to or removed.
+  bool get mate => j['mate'] as bool? ?? false;
 }
 
 /// Something a friend sent. The copies are already in the book.
@@ -203,8 +206,11 @@ abstract final class Api {
   static Future<Comments> comments(String id) async =>
       Comments(await server('GET', '/recipes/${_q(id)}/comments') as Map<String, dynamic>);
 
-  static Future<List<Friend>> friends() async =>
-      [for (final f in await server('GET', '/friends') as List) Friend(f as Map<String, dynamic>)];
+  /// [mates]: the household too, as in the to-do app (same people in both).
+  static Future<List<Friend>> friends({bool mates = false}) async => [
+        for (final f in await server('GET', mates ? '/friends?mates=1' : '/friends') as List)
+          Friend(f as Map<String, dynamic>)
+      ];
 
   // ---- small writes from the recipe screen ----
 

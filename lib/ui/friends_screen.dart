@@ -8,7 +8,8 @@ import 'recipe_widgets.dart';
 import 'skeleton.dart';
 
 /// Friends get copies of recipes and cookbooks you send; they don't see your
-/// book or join your household. Invite by a single-use link.
+/// book or join your household. Invite by a single-use link. The same people
+/// are friends in the to-do app; the household is listed too, as it is there.
 class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
 
@@ -29,7 +30,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   Future<void> _load() async {
     try {
-      final f = await Api.friends();
+      final f = await Api.friends(mates: true);
       if (mounted) setState(() { _friends = f; _error = null; });
     } catch (e) {
       if (mounted) setState(() => _error = e);
@@ -137,9 +138,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
           else
             for (final f in friends)
               ListTile(
-                leading: const Icon(Icons.person_outline),
+                leading: Icon(f.mate ? Icons.home_outlined : Icons.person_outline),
                 title: Text(f.name),
-                trailing: IconButton(
+                subtitle: f.mate ? const Text('מהבית') : null,
+                trailing: f.mate ? null : IconButton(
                   tooltip: 'הסרת ${f.name}',
                   icon: const Icon(Icons.person_remove_outlined),
                   onPressed: () => _remove(f),

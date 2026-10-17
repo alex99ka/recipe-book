@@ -9,6 +9,9 @@ Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app, archived).
 
 ## [Unreleased]
 
+### Changed
+- אותם חברים כמו באפליקציית המשימות: מי שהצטרף לרשימה שלכם בקישור הוא גם חבר כאן, ובמסך החברים מופיעים גם בני הבית ("מהבית").
+
 ## [5.4.0] - 2026-10-16
 
 ### Added
