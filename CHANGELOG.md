@@ -9,6 +9,9 @@ Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app, archived).
 
 ## [Unreleased]
 
+### Changed
+- כל אחד יכול להיכנס עם חשבון Google ומקבל ספר מתכונים משלו, בלי הזמנה. ספר הבית נשאר רק של בני הבית.
+
 ## [5.7.0] - 2026-10-17
 
 ### Fixed

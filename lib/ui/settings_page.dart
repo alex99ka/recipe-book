@@ -192,7 +192,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ListTile(
           leading: const Icon(Icons.share_outlined),
           title: const Text('שיתוף האפליקציה'),
-          subtitle: const Text('קישור לאתר ולהורדה לאנדרואיד. נכנסים רק בהזמנה'),
+          subtitle: const Text('קישור לאתר ולהורדה לאנדרואיד. כל אחד נכנס עם Google ומקבל ספר משלו'),
           onTap: _shareApp,
         ),
         TourTarget(
@@ -311,7 +311,7 @@ class _SettingsPageState extends State<SettingsPage> {
         const ListTile(
           leading: Icon(Icons.shield_outlined),
           title: Text('מה מגן על הנתונים'),
-          subtitle: Text('רק בני הבית וחברים שהוזמנו נכנסים, והשרת בודק כל בקשה. '
+          subtitle: Text('כל חשבון רואה רק את הספר שלו ושל בני הבית, והשרת בודק כל בקשה. '
               'המתכונים נשמרים בשרת בבית ומגובים כל לילה. '
               'מומלץ אימות דו-שלבי בחשבון Google.'),
         ),
