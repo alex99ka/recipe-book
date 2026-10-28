@@ -10,7 +10,7 @@ The server is in `C:\claude projects\cld\server`; its commands are in that repo.
 | `dart run flutter_launcher_icons` | Regenerates the icons from `assets/icon.png`. |
 | `git tag X.Y.Z && git push --atomic origin master X.Y.Z` | Releases (a prerelease: only APP_EARLY_USERS get it). |
 | `gh workflow run promote.yml -f version=X.Y.Z` | Makes a release everyone's, web included. |
-| `gh release download X.Y.Z -p '*.apk' -D $env:TEMPridge` then `gh release create X.Y.Z $env:TEMPridge
+| `gh release download X.Y.Z -p '*.apk' -D bridge`, `gh repo unarchive alex99ka/recipe-book-app`, `gh release create X.Y.Z bridge/*.apk -R alex99ka/recipe-book-app`, `gh repo archive alex99ka/recipe-book-app` | Bridge for a 4.x Ionic install: 4.x checks the old repo, sees a new MAJOR and installs the APK from inside the app. |
 | `MSYS_NO_PATHCONV=1 iscc /Q /DAppVersion=X.Y.Z installer/app.iss` | Builds the Windows installer locally (Git Bash mangles `/Q` without the prefix). |
 
 Server-side settings (the Pi, `~/docker/recipe-server/.env`, then recreate the container):

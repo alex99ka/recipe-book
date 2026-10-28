@@ -117,17 +117,25 @@ class _AppState extends State<App> {
         // Links are handled in place (recipes/invite.dart), not as routes.
         initialRoute: '/',
         // The walkthrough over every screen, the fingerprint lock over that.
-        builder: (context, screens) => AppLock(
-          signOut: Auth.signOut,
-          signedIn: () {
-            try {
-              return FirebaseAuth.instance.currentUser != null;
-            } catch (_) {
-              return false; // Firebase never started
-            }
-          },
-          child: TourLayer(child: screens!),
-        ),
+        builder: (context, screens) {
+          final mq = MediaQuery.of(context);
+          // The chosen text size on top of the device's own.
+          return MediaQuery(
+            data: mq.copyWith(textScaler: TextScaler.linear(
+                mq.textScaler.scale(1) * SettingsStore.instance.textScale)),
+            child: AppLock(
+              signOut: Auth.signOut,
+              signedIn: () {
+                try {
+                  return FirebaseAuth.instance.currentUser != null;
+                } catch (_) {
+                  return false; // Firebase never started
+                }
+              },
+              child: TourLayer(child: screens!),
+            ),
+          );
+        },
       ),
     );
   }

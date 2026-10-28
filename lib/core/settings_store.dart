@@ -20,6 +20,9 @@ class SettingsStore extends ChangeNotifier {
   /// 'he', 'ru' or 'en': the app's words, and the recipes the server sends.
   String lang = 'he';
 
+  /// Text size on top of the device's own, 1 = as the device has it.
+  double textScale = 1;
+
   Future<void> load() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -29,6 +32,7 @@ class SettingsStore extends ChangeNotifier {
       beta = prefs.getBool('beta') ?? true;
       rotate = prefs.getBool('rotate') ?? true;
       lang = prefs.getString('lang') ?? 'he';
+      textScale = prefs.getDouble('textScale') ?? 1;
       _applyLang();
     } catch (_) {}
     _applyRotate();
@@ -47,6 +51,14 @@ class SettingsStore extends ChangeNotifier {
     notifyListeners();
     try {
       await (await SharedPreferences.getInstance()).setString('lang', code);
+    } catch (_) {}
+  }
+
+  Future<void> setTextScale(double s) async {
+    textScale = s;
+    notifyListeners();
+    try {
+      await (await SharedPreferences.getInstance()).setDouble('textScale', s);
     } catch (_) {}
   }
 

@@ -362,6 +362,21 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         ),
+        ListenableBuilder(
+          listenable: SettingsStore.instance,
+          builder: (context, _) => ListTile(
+            leading: const Icon(Icons.format_size),
+            title: Text(t('גודל הטקסט')),
+            subtitle: Slider(
+              value: SettingsStore.instance.textScale,
+              min: 0.8,
+              max: 1.6,
+              divisions: 8,
+              label: '${(SettingsStore.instance.textScale * 100).round()}%',
+              onChanged: SettingsStore.instance.setTextScale,
+            ),
+          ),
+        ),
         if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
           ListenableBuilder(
             listenable: SettingsStore.instance,

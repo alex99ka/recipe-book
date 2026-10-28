@@ -306,6 +306,7 @@ const translations = <String, (String, String)>{
   'כהה': ('Тёмная', 'Dark'),
   'סיבוב אוטומטי למסך רחב': ('Автоповорот для широкого экрана', 'Auto-rotate to wide screen'),
   'כבוי: המסך נשאר לאורך גם כשמסובבים את הטלפון או הטאבלט': ('Выключено: экран остаётся вертикальным, даже если повернуть телефон или планшет', 'Off: the screen stays upright even when you turn the phone or tablet'),
+  'גודל הטקסט': ('Размер текста', 'Text size'),
   'נתונים': ('Данные', 'Data'),
   'ייצוא הספר': ('Экспорт книги', 'Export the book'),
   'כל המתכונים והספרים, כקובץ JSON וקובץ CSV לאקסל': ('Все рецепты и книги, в файле JSON и в файле CSV для Excel', 'Every recipe and book, as a JSON file and a CSV file for Excel'),

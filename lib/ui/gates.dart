@@ -85,21 +85,29 @@ class _AccessGateState extends State<_AccessGate> {
           .showSnackBar(SnackBar(duration: const Duration(seconds: 8), content: Text(said)));
     }
     try {
-      final ok = await RemoteConfig.instance.checkAccess(widget.email);
-      await rememberAccess(ok);
-      AppUpdater.instance?.early =
-          RemoteConfig.instance.earlyUser && SettingsStore.instance.beta;
-      return ok;
-    } catch (e) {
-      if (e is ServerException && e.status == 401) {
-        // The server no longer takes this session (revoked, account disabled):
-        // back to the sign-in screen, never a stuck app where every call fails.
-        await Auth.signOut();
-        return false;
+      return await _ask();
+    } on ServerException catch (e) {
+      // Signed in once is signed in for good: a refused token gets a fresh one,
+      // never the sign-in screen. Only the user's own "יציאה" signs out.
+      if (e.status == 401) {
+        try {
+          await FirebaseAuth.instance.currentUser?.getIdToken(true);
+          return await _ask();
+        } catch (_) {}
       }
+      return await lastKnownAccess() ?? false;
+    } catch (_) {
       // Offline: whoever was let in before stays in.
       return await lastKnownAccess() ?? false;
     }
+  }
+
+  Future<bool> _ask() async {
+    final ok = await RemoteConfig.instance.checkAccess(widget.email);
+    await rememberAccess(ok);
+    AppUpdater.instance?.early =
+        RemoteConfig.instance.earlyUser && SettingsStore.instance.beta;
+    return ok;
   }
 
   @override
