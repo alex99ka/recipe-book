@@ -9,6 +9,7 @@ import '../recipes/scaling.dart';
 import 'cookbook_screen.dart';
 import 'edit_recipe_screen.dart';
 import 'export_dialog.dart';
+import 'panel_screen.dart';
 import 'recipe_comments.dart';
 import 'recipe_widgets.dart';
 import 'send_dialog.dart';
@@ -44,6 +45,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   Object? _error;
   int _factor = 1;
   bool _shopping = false;
+  bool _showing = false;
   final _comments = GlobalKey<RecipeCommentsState>();
 
   @override
@@ -145,6 +147,27 @@ class _RecipeScreenState extends State<RecipeScreen> {
     final sent = await sendToFriend(context,
         title: r.title, send: (to, note) => Api.send(r.id, to, note));
     if (sent) await _comments.currentState?.load(); // the note opened a conversation
+  }
+
+  Future<void> _showOnScreen() async {
+    setState(() => _showing = true);
+    try {
+      await Api.showOnScreen(_r!.id, _factor);
+      _messenger.showSnackBar(SnackBar(content: Text(t('המתכון יופיע בלחיצה הבאה על הכפתור במסך'))));
+    } on ServerException catch (e) {
+      if (e.status != 409) return showError(_messenger, e, t('המתכון לא נשלח למסך'));
+      _messenger.showSnackBar(SnackBar(
+        content: Text(t('אין מסך שמחובר לספר הזה')),
+        action: SnackBarAction(
+            label: t('חיבור מסך'),
+            onPressed: () => Navigator.push(
+                context, MaterialPageRoute<void>(builder: (_) => const PanelScreen()))),
+      ));
+    } catch (e) {
+      showError(_messenger, e, t('המתכון לא נשלח למסך'));
+    } finally {
+      if (mounted) setState(() => _showing = false);
+    }
   }
 
   Future<void> _edit() async {
@@ -269,6 +292,14 @@ class _RecipeScreenState extends State<RecipeScreen> {
               label: Text(t('הוספה לרשימת הקניות')),
               onPressed: _shopping ? null : _shoppingList,
             ),
+          ),
+          OutlinedButton.icon(
+            icon: _showing
+                ? const SizedBox.square(
+                    dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.tv_outlined),
+            label: Text(t('הצגה במסך')),
+            onPressed: _showing ? null : _showOnScreen,
           ),
           ];
     final rest = r == null

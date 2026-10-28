@@ -293,6 +293,10 @@ abstract final class Api {
   static Future<String> shoppingList(String id, List<String> lines) async =>
       (await server('POST', '/recipes/${_q(id)}/shopping-list', {'lines': lines}) as Map)['url'] as String;
 
+  /// On the kitchen screen at the next button press; 409 when this book has no screen linked.
+  static Future<void> showOnScreen(String id, int scale) =>
+      server('POST', '/recipes/${_q(id)}/show', {'scale': scale});
+
   /// A copy into the friend's book; the note opens a conversation in it.
   static Future<void> send(String id, String to, String note) =>
       server('POST', '/recipes/${_q(id)}/send', {'to': to, 'note': note});

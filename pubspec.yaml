@@ -1,7 +1,7 @@
 name: recipe_book
 description: "ספר מתכונים: the recipe book app, on the make-an-app core."
 publish_to: 'none'
-version: 5.12.1
+version: 5.12.2
 
 environment:
   sdk: ^3.13.3
