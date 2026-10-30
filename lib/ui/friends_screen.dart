@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../core/errors.dart';
 import '../recipes/api.dart';
+import '../recipes/links.dart';
 import 'recipe_widgets.dart';
 import 'skeleton.dart';
 import '../core/i18n.dart';
@@ -71,8 +71,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           FilledButton(
             onPressed: () {
               Navigator.pop(c);
-              launchUrl(Uri.parse('https://wa.me/?text=${Uri.encodeComponent(text)}'),
-                  mode: LaunchMode.externalApplication);
+              openLink('https://wa.me/?text=${Uri.encodeComponent(text)}');
             },
             child: Text(t('וואטסאפ')),
           ),

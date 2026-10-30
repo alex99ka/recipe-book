@@ -177,6 +177,15 @@ class MainActivity : FlutterFragmentActivity() {
                     }
                     result.success(null)
                 }
+                // A link in the app that owns it, as its own task: url_launcher starts
+                // it in this app's task, so TikTok showed up inside the recipe book too.
+                "openLink" -> try {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(call.arguments as String))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    result.success(null)
+                } catch (e: Exception) {
+                    result.error("no_app", e.message, null)
+                }
                 else -> result.notImplemented()
             }
         }

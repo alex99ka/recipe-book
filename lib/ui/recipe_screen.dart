@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../core/errors.dart';
 import '../core/tour.dart';
 import '../recipes/api.dart';
+import '../recipes/links.dart';
 import '../recipes/offline.dart';
 import '../recipes/scaling.dart';
 import 'cookbook_screen.dart';
@@ -26,10 +26,6 @@ class RecipeScreen extends StatefulWidget {
   @override
   State<RecipeScreen> createState() => _RecipeScreenState();
 }
-
-/// Same rule as the server's video.py: any tiktok.com host, short links included.
-bool isTikTok(String url) =>
-    RegExp(r'(^|\.)tiktok\.com$', caseSensitive: false).hasMatch(Uri.tryParse(url)?.host ?? '');
 
 /// Tapping a star sets it; tapping the same star again makes it a half; a
 /// half on the first star clears.
@@ -153,6 +149,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     setState(() => _showing = true);
     try {
       await Api.showOnScreen(_r!.id, _factor);
+      _setPlanned(false); // the server takes it off this week's list
       _messenger.showSnackBar(SnackBar(content: Text(t('המתכון יופיע בלחיצה הבאה על הכפתור במסך'))));
     } on ServerException catch (e) {
       if (e.status != 409) return showError(_messenger, e, t('המתכון לא נשלח למסך'));
@@ -185,12 +182,29 @@ class _RecipeScreenState extends State<RecipeScreen> {
     setState(() => _shopping = true);
     try {
       final url = await Api.shoppingList(_r!.id, _lines);
+      _setPlanned(true); // shopping for it puts it on this week's list
       // The to-do app takes this link over when it is installed; otherwise the browser.
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      await openLink(url);
     } catch (e) {
       showError(_messenger, e, t('רשימת הקניות לא נוצרה'));
     } finally {
       if (mounted) setState(() => _shopping = false);
+    }
+  }
+
+  void _setPlanned(bool on) {
+    if (mounted && _r != null) {
+      setState(() => _r = Recipe({..._r!.j, 'plannedAt': on ? DateTime.now().toUtc().toIso8601String() : null}));
+    }
+  }
+
+  Future<void> _plan(bool on) async {
+    try {
+      await Api.plan(_r!.id, on);
+      _setPlanned(on);
+      if (!on) _messenger.showSnackBar(SnackBar(content: Text(t('בתיאבון! הוסר מרשימת השבוע.'))));
+    } catch (e) {
+      showError(_messenger, e, t('השינוי לא נשמר'));
     }
   }
 
@@ -206,12 +220,23 @@ class _RecipeScreenState extends State<RecipeScreen> {
         : <Widget>[
           Text(r.title, style: text.headlineSmall),
           TourTarget('recipe.stars', child: _Stars(r.rating, onTap: _rate)),
-          if (isTikTok(r.sourceUrl))
+          if (linkKind(r.sourceUrl) case final kind?)
             FilledButton.tonalIcon(
-              icon: const Icon(Icons.play_circle_outline),
-              label: Text(t('לסרטון בטיקטוק')),
-              onPressed: () => launchUrl(Uri.parse(r.sourceUrl),
-                  mode: LaunchMode.externalApplication),
+              icon: Icon(kind.icon),
+              label: Text(kind.label),
+              onPressed: () => openLink(r.sourceUrl),
+            ),
+          if (r.plannedAt == null)
+            OutlinedButton.icon(
+              icon: const Icon(Icons.event_available_outlined),
+              label: Text(t('רוצה להכין השבוע')),
+              onPressed: () => _plan(true),
+            )
+          else
+            FilledButton.icon(
+              icon: const Icon(Icons.check),
+              label: Text(t('הכנתי (ברשימת השבוע)')),
+              onPressed: () => _plan(false),
             ),
           if (r.servings.isNotEmpty || r.totalTime.isNotEmpty)
             Padding(
@@ -328,16 +353,6 @@ class _RecipeScreenState extends State<RecipeScreen> {
                 ),
             ]),
           ],
-          if (r.sourceUrl.isNotEmpty && !isTikTok(r.sourceUrl))
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: TextButton.icon(
-                icon: const Icon(Icons.link),
-                label: Text(t('למקור')),
-                onPressed: () => launchUrl(Uri.parse(r.sourceUrl),
-                    mode: LaunchMode.externalApplication),
-              ),
-            ),
           ];
     return Scaffold(
       appBar: AppBar(title: Text(r?.title ?? widget.title), actions: [

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/errors.dart';
 import '../recipes/api.dart';
+import '../recipes/links.dart';
 import 'pick.dart';
 import 'recipe_widgets.dart';
 import '../core/i18n.dart';
@@ -152,11 +153,28 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
               TextField(
                   controller: _categories,
                   decoration: InputDecoration(labelText: t('קטגוריות, מופרדות בפסיק'))),
-              TextField(
-                controller: _source,
-                keyboardType: TextInputType.url,
-                textDirection: TextDirection.ltr,
-                decoration: InputDecoration(labelText: t('קישור למקור')),
+              // Recognises the link as it is typed, and opens it in its own app.
+              ValueListenableBuilder(
+                valueListenable: _source,
+                builder: (context, v, _) {
+                  final kind = linkKind(v.text);
+                  return TextField(
+                    controller: _source,
+                    keyboardType: TextInputType.url,
+                    textDirection: TextDirection.ltr,
+                    decoration: InputDecoration(
+                      labelText: t('קישור (טיקטוק, אינסטגרם, יוטיוב או אתר)'),
+                      helperText: kind?.label,
+                      suffixIcon: kind == null
+                          ? null
+                          : IconButton(
+                              tooltip: kind.label,
+                              icon: Icon(kind.icon),
+                              onPressed: () => openLink(v.text.trim()),
+                            ),
+                    ),
+                  );
+                },
               ),
             ]),
           ),

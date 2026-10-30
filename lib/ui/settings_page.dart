@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../config.dart';
 import '../core/app_info.dart';
@@ -20,6 +19,7 @@ import '../core/tour.dart';
 import '../core/update.dart';
 import '../core/web_update.dart';
 import '../recipes/api.dart';
+import '../recipes/links.dart';
 import 'admin_screen.dart';
 import 'export_dialog.dart';
 import 'friends_screen.dart';
@@ -228,8 +228,7 @@ class _SettingsPageState extends State<SettingsPage> {
           subtitle: Text(t('אותו חשבון ואותו בית')),
           trailing: const Icon(Icons.open_in_new),
           // The to-do app takes its own link over when installed; otherwise the web.
-          onTap: () => launchUrl(Uri.parse('https://alex-todo-shopping.web.app'),
-              mode: LaunchMode.externalApplication),
+          onTap: () => openLink('https://alex-todo-shopping.web.app'),
         ),
         if (homeWidgetsSupported)
           ListTile(

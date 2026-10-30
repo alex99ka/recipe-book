@@ -26,6 +26,9 @@ extension type Summary(Map<String, dynamic> j) {
   List<String> get tags => _strings(j['tags']);
   List<String> get categories => _strings(j['categories']);
   bool get translated => j['translated'] == true;
+
+  /// Marked "want to make this week" (the server drops it after 7 days).
+  DateTime? get plannedAt => DateTime.tryParse(j['plannedAt'] as String? ?? '')?.toLocal();
 }
 
 /// A scanned cookbook (source tag) or one of the book's own (a collection).
@@ -317,6 +320,9 @@ abstract final class Api {
       (await server('POST', '/recipes/${_q(id)}/shopping-list', {'lines': lines}) as Map)['url'] as String;
 
   /// On the kitchen screen at the next button press; 409 when this book has no screen linked.
+  /// Want to make it this week, or (false) made it.
+  static Future<void> plan(String id, bool on) => server(on ? 'PUT' : 'DELETE', '/recipes/${_q(id)}/plan');
+
   static Future<void> showOnScreen(String id, int scale) =>
       server('POST', '/recipes/${_q(id)}/show', {'scale': scale});
 

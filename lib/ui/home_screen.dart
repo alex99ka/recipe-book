@@ -258,6 +258,27 @@ class _HomeScreenState extends State<HomeScreen> {
     final shown =
         recipes == null ? null : (_browsing && !_all ? recipes.take(30).toList() : recipes);
     final cols = MediaQuery.sizeOf(context).width >= 720 ? 2 : 1;
+    // Want to make this week, latest marked first.
+    final planned = !_browsing || recipes == null
+        ? const <Summary>[]
+        : (recipes.where((r) => r.plannedAt != null).toList()
+          ..sort((a, b) => b.plannedAt!.compareTo(a.plannedAt!)));
+    // Wide (a tablet, or a phone on its side): two recipes a row.
+    Iterable<Widget> grid(List<Summary> list, {bool tour = false}) sync* {
+      for (var i = 0; i < list.length; i += cols) {
+        yield Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          for (var j = i; j < i + cols; j++)
+            Expanded(
+              child: j >= list.length
+                  ? const SizedBox()
+                  : tour && j == 0
+                      ? TourTarget('home.first', child: RecipeTile(list[j], onBack: _load))
+                      : RecipeTile(list[j], onBack: _load),
+            ),
+        ]);
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: _searching
@@ -364,6 +385,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           ),
+                        if (planned.isNotEmpty) ...[
+                          _Header(t('רוצים להכין השבוע')),
+                          ...grid(planned),
+                        ],
                         if (_browsing) ...[
                           _Header(t('הספרים שלי')),
                           TourTarget(
@@ -398,19 +423,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Text(_browsing ? t('הספר עוד ריק.') : t('לא נמצא מתכון.'),
                                 textAlign: TextAlign.center),
                           ),
-                        // Wide (a tablet, or a phone on its side): two recipes a row.
-                        for (var i = 0; i < shown.length; i += cols)
-                          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            for (var j = i; j < i + cols; j++)
-                              Expanded(
-                                child: j >= shown.length
-                                    ? const SizedBox()
-                                    : j == 0
-                                        ? TourTarget('home.first',
-                                            child: RecipeTile(shown[j], onBack: _load))
-                                        : RecipeTile(shown[j], onBack: _load),
-                              ),
-                          ]),
+                        ...grid(shown, tour: true),
                         if (_browsing && shown.length < recipes!.length)
                           Padding(
                             padding: const EdgeInsets.all(16),
