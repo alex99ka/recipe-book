@@ -154,6 +154,29 @@ extension type CalendarFeed(Map<String, dynamic> j) {
 /// Whose the kitchen screen is: this book's, nobody's (it shows a code), or another book's.
 enum PanelState { mine, free, taken }
 
+/// The kitchen screen; everything but [state] only for the book it is linked to.
+extension type PanelInfo(Map<String, dynamic> j) {
+  PanelState get state => PanelState.values.byName(j['state'] as String);
+  Map<String, dynamic> get _battery => j['battery'] as Map<String, dynamic>? ?? const {};
+  int? get batteryPct => _battery['pct'] as int?;
+  DateTime? get chargedAt => DateTime.tryParse(_battery['charged_at'] as String? ?? '')?.toLocal();
+
+  /// When it will need charging; null until a few days of readings measure the drain.
+  DateTime? get emptyAt => DateTime.tryParse(_battery['empty_at'] as String? ?? '')?.toLocal();
+  double? get daysLeft => (_battery['days_left'] as num?)?.toDouble();
+  DateTime? get lastSeen => DateTime.tryParse(j['last_seen_at'] as String? ?? '')?.toLocal();
+  bool get idleQueued => j['idle_queued'] as bool? ?? false;
+  String get font => j['font'] as String? ?? '';
+  String get scale => j['scale'] as String? ?? '';
+  List<({String key, String label})> get fonts => _choices(j['fonts']);
+  List<({String key, String label})> get scales => _choices(j['scales']);
+}
+
+List<({String key, String label})> _choices(Object? v) => [
+      for (final c in v as List? ?? const [])
+        (key: (c as Map)['key'] as String, label: c['label'] as String)
+    ];
+
 List<String> _strings(Object? v) => [for (final x in v as List? ?? const []) '$x'];
 List<Comment> _comments(Object? v) =>
     [for (final c in v as List? ?? const []) Comment(c as Map<String, dynamic>)];
@@ -389,7 +412,14 @@ abstract final class Api {
 
   // ---- the kitchen screen ----
 
-  static Future<PanelState> panel() async => _panel(await server('GET', '/panel'));
+  static Future<PanelInfo> panel() async => PanelInfo(await server('GET', '/panel') as Map<String, dynamic>);
+
+  /// The font or size of what the screen draws, from its next wake.
+  static Future<PanelInfo> setPanelStyle({String? font, String? scale}) async => PanelInfo(
+      await server('PATCH', '/panel', {'font': ?font, 'scale': ?scale}) as Map<String, dynamic>);
+
+  /// The idle screen (calendars) on the screen's next wake.
+  static Future<void> showIdle() => server('POST', '/panel/idle');
 
   /// With the code the unlinked screen shows.
   static Future<PanelState> linkPanel(String code) async =>

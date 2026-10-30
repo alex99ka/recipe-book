@@ -217,7 +217,7 @@ class _SettingsPageState extends State<SettingsPage> {
           child: ListTile(
             leading: const Icon(Icons.tablet_outlined),
             title: Text(t('המסך במטבח')),
-            subtitle: Text(t('חיבור המסך לספר, והיומנים שהוא מציג')),
+            subtitle: Text(t('סוללה, תצוגה, יומנים וחיבור המסך לספר')),
             onTap: () => Navigator.push(
                 context, MaterialPageRoute<void>(builder: (_) => const PanelScreen())),
           ),

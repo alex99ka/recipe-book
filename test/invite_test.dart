@@ -9,4 +9,12 @@ void main() {
     expect(inviteToken('/invite/'), isNull);
     expect(inviteToken('/recipes/invite/abc'), isNull);
   });
+
+  test("a kitchen screen's QR gives its 6-digit code", () {
+    expect(panelCode('/panel/042517'), '042517');
+    expect(panelCode('/panel/042517/'), '042517');
+    expect(panelCode('/panel/04251'), isNull);
+    expect(panelCode('/panel/0425178'), isNull);
+    expect(panelCode('/invite/042517'), isNull);
+  });
 }

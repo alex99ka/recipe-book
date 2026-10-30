@@ -63,11 +63,13 @@ class _AccessGateState extends State<_AccessGate> {
   void initState() {
     super.initState();
     pendingInvite.addListener(_onInvite);
+    pendingPanelCode.addListener(_onPanel);
   }
 
   @override
   void dispose() {
     pendingInvite.removeListener(_onInvite);
+    pendingPanelCode.removeListener(_onPanel);
     super.dispose();
   }
 
@@ -77,15 +79,23 @@ class _AccessGateState extends State<_AccessGate> {
     if (pendingInvite.value != null) setState(() => _allowed = _check());
   }
 
-  Future<bool> _check() async {
-    // First: an invite is what lets a newcomer in.
-    final said = await acceptPendingInvite();
+  /// A kitchen screen's QR scanned while the app runs.
+  Future<void> _onPanel() async => _say(await linkPendingPanel());
+
+  void _say(String? said) {
     if (said != null && mounted) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(duration: const Duration(seconds: 8), content: Text(said)));
     }
+  }
+
+  Future<bool> _check() async {
+    // First: an invite is what lets a newcomer in.
+    _say(await acceptPendingInvite());
     try {
-      return await _ask();
+      final ok = await _ask();
+      if (ok) _say(await linkPendingPanel()); // the QR that opened the app
+      return ok;
     } on ServerException catch (e) {
       // Signed in once is signed in for good: a refused token gets a fresh one,
       // never the sign-in screen. Only the user's own "יציאה" signs out.

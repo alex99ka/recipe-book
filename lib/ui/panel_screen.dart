@@ -7,7 +7,7 @@ import 'skeleton.dart';
 import '../core/i18n.dart';
 
 /// The kitchen's e-ink screen: link it to this book with the code it shows,
-/// and pick the calendars its idle page lists.
+/// see its battery, set how it draws, and pick the calendars its idle page lists.
 class PanelScreen extends StatefulWidget {
   const PanelScreen({super.key});
 
@@ -16,7 +16,7 @@ class PanelScreen extends StatefulWidget {
 }
 
 class _PanelScreenState extends State<PanelScreen> {
-  PanelState? _panel;
+  PanelInfo? _panel;
   List<CalendarFeed>? _calendars;
   Object? _error;
   bool _busy = false;
@@ -32,7 +32,7 @@ class _PanelScreenState extends State<PanelScreen> {
   Future<void> _load() async {
     try {
       final panel = await Api.panel();
-      final calendars = panel == PanelState.mine ? await Api.calendars() : null;
+      final calendars = panel.state == PanelState.mine ? await Api.calendars() : null;
       if (mounted) setState(() { _panel = panel; _calendars = calendars; _error = null; });
     } catch (e) {
       if (mounted) setState(() => _error = e);
@@ -98,9 +98,31 @@ class _PanelScreenState extends State<PanelScreen> {
     }
     try {
       await Api.unlinkPanel();
-      if (mounted) setState(() { _panel = PanelState.free; _calendars = null; });
+      await _load();
     } catch (e) {
       showError(_messenger, e, t('המסך לא נותק'));
+    }
+  }
+
+  Future<void> _style({String? font, String? scale}) async {
+    setState(() => _busy = true);
+    try {
+      final p = await Api.setPanelStyle(font: font, scale: scale);
+      if (mounted) setState(() => _panel = p);
+      _messenger.showSnackBar(SnackBar(content: Text(t('התצוגה עודכנה. היא תופיע בלחיצה הבאה על כפתור במסך.'))));
+    } catch (e) {
+      showError(_messenger, e, t('התצוגה לא עודכנה'));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _showIdle() async {
+    try {
+      await Api.showIdle();
+      await _load();
+    } catch (e) {
+      showError(_messenger, e, t('מסך המנוחה לא הוזמן'));
     }
   }
 
@@ -162,8 +184,54 @@ class _PanelScreenState extends State<PanelScreen> {
               : RefreshIndicator(
                   onRefresh: _load,
                   child: ListView(children: [
-                    if (panel == PanelState.mine) ...[
+                    if (panel.state == PanelState.mine) ...[
                       note(t('המסך מחובר לספר הזה. היומנים מופיעים במסך המנוחה שלו.')),
+                      ListTile(
+                        leading: Icon(_batteryIcon(panel.batteryPct)),
+                        title: Text(panel.batteryPct == null
+                            ? t('סוללה: עוד לא דווחה')
+                            : t('סוללה: {0}%', [panel.batteryPct])),
+                        subtitle: Text([
+                          if (panel.chargedAt case final c?) t('נטען לאחרונה ב-{0}', [_day(c)]),
+                          switch ((panel.daysLeft, panel.emptyAt)) {
+                            (final d?, final e?) => t('לטעון בעוד כ-{0} ימים (בסביבות {1})', [d.round(), _day(e)]),
+                            _ => t('עוד אין מספיק קריאות כדי להעריך מתי לטעון'),
+                          },
+                          if (panel.lastSeen case final l?) t('התעורר לאחרונה ב-{0}', [_when(l)]),
+                        ].join('\n')),
+                        isThreeLine: true,
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.font_download_outlined),
+                        title: Text(t('גופן')),
+                        trailing: DropdownButton<String>(
+                          value: panel.fonts.any((f) => f.key == panel.font) ? panel.font : null,
+                          items: [
+                            for (final f in panel.fonts) DropdownMenuItem(value: f.key, child: Text(f.label)),
+                          ],
+                          onChanged: _busy ? null : (v) => _style(font: v),
+                        ),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.format_size),
+                        title: Text(t('גודל הטקסט במסך')),
+                        trailing: DropdownButton<String>(
+                          value: panel.scales.any((f) => f.key == panel.scale) ? panel.scale : null,
+                          items: [
+                            for (final f in panel.scales) DropdownMenuItem(value: f.key, child: Text(f.label)),
+                          ],
+                          onChanged: _busy ? null : (v) => _style(scale: v),
+                        ),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.event_note_outlined),
+                        title: Text(t('להציג את מסך המנוחה')),
+                        subtitle: Text(panel.idleQueued
+                            ? t('יוצג כשהמסך יתעורר בפעם הבאה')
+                            : t('השעה, היומנים ומזג האוויר, במקום המתכון')),
+                        onTap: panel.idleQueued ? null : _showIdle,
+                      ),
+                      const Divider(),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(t('יומנים'), style: Theme.of(context).textTheme.titleMedium),
@@ -206,9 +274,9 @@ class _PanelScreenState extends State<PanelScreen> {
                         ),
                       ),
                     ] else ...[
-                      note(panel == PanelState.taken
-                          ? t('המסך מחובר כרגע לספר אחר. מי שחיבר אותו מנתק אותו שם, ואז המסך מציג קוד.')
-                          : t('לחצו על הכפתור במסך. הוא יציג קוד בן 6 ספרות, שתקף לרבע שעה.')),
+                      note(panel.state == PanelState.taken
+                          ? t('המסך מחובר כרגע לספר אחר. כדי לחבר אותו לכאן, לוחצים על הכפתור הראשון במסך 8 שניות: הוא עובר למצב חיבור.')
+                          : t('המסך במצב חיבור: הוא מציג קוד QR וקוד בן 6 ספרות, שתקפים לחצי שעה. סורקים את הקוד במצלמה, או מקלידים את המספר כאן. מסך מחובר עובר למצב חיבור בלחיצה של 8 שניות על הכפתור הראשון.')),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: FilledButton.icon(
@@ -223,3 +291,14 @@ class _PanelScreenState extends State<PanelScreen> {
     );
   }
 }
+
+IconData _batteryIcon(int? pct) => switch (pct) {
+      null => Icons.battery_unknown_outlined,
+      < 15 => Icons.battery_alert,
+      < 40 => Icons.battery_2_bar,
+      < 75 => Icons.battery_4_bar,
+      _ => Icons.battery_full,
+    };
+
+String _day(DateTime d) => '${d.day}/${d.month}';
+String _when(DateTime d) => '${_day(d)} ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';

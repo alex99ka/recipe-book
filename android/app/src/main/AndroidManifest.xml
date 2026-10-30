@@ -42,12 +42,13 @@
                 <data android:mimeType="image/*"/>
                 <data android:mimeType="application/pdf"/>
             </intent-filter>
-            <!-- A friend's invite link opens the app (web/.well-known/assetlinks.json). -->
+            <!-- A friend's invite link, or a kitchen screen's pairing QR, opens the app (web/.well-known/assetlinks.json). -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="https" android:host="alex-recipe-book.web.app" android:pathPrefix="/invite/"/>
+                <data android:scheme="https" android:host="alex-recipe-book.web.app" android:pathPrefix="/panel/"/>
             </intent-filter>
         </activity>
         <!-- Installs a staged build once the app has been out of sight a while. -->

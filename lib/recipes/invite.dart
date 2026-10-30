@@ -11,21 +11,41 @@ final pendingInvite = ValueNotifier<String?>(null);
 
 String? inviteToken(String path) => RegExp(r'^/invite/([^/?#]+)').firstMatch(path)?.group(1);
 
+/// The code from the QR a kitchen screen shows in pairing mode (`…/panel/123456`).
+final pendingPanelCode = ValueNotifier<String?>(null);
+
+String? panelCode(String path) => RegExp(r'^/panel/(\d{6})(?:[/?#]|$)').firstMatch(path)?.group(1);
+
 /// Before runApp: the link that started the app (on the web, the page's own
 /// address), and any link that arrives while it runs (an Android App Link).
 void listenForInvites() {
-  pendingInvite.value =
-      inviteToken(kIsWeb ? Uri.base.path : PlatformDispatcher.instance.defaultRouteName);
+  _take(kIsWeb ? Uri.base.path : PlatformDispatcher.instance.defaultRouteName);
   WidgetsBinding.instance.addObserver(_Links());
 }
 
+bool _take(String path) {
+  final token = inviteToken(path), code = panelCode(path);
+  if (token != null) pendingInvite.value = token;
+  if (code != null) pendingPanelCode.value = code;
+  return token != null || code != null;
+}
+
 class _Links with WidgetsBindingObserver {
+  // true = handled: the app has no named routes for these
   @override
-  Future<bool> didPushRouteInformation(RouteInformation info) async {
-    final token = inviteToken(info.uri.path);
-    if (token == null) return false;
-    pendingInvite.value = token;
-    return true; // handled: the app has no named routes for it
+  Future<bool> didPushRouteInformation(RouteInformation info) async => _take(info.uri.path);
+}
+
+/// Links the kitchen screen whose QR opened the app, if any; returns what to tell the user.
+Future<String?> linkPendingPanel() async {
+  final code = pendingPanelCode.value;
+  if (code == null) return null;
+  pendingPanelCode.value = null;
+  try {
+    await Api.linkPanel(code);
+    return t('המסך מחובר. בלחיצה הבאה הוא יציג את הספר.');
+  } catch (e) {
+    return errorText(e, t('המסך לא חובר'));
   }
 }
 
