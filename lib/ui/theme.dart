@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/settings_store.dart';
 
 /// The only place colours are written. Screens use Theme.of(context) or
 /// [AppTokens]; test/theme_test.dart fails on any colour not listed here.
@@ -47,7 +48,7 @@ ThemeData appTheme(Brightness brightness) {
   );
   return ThemeData(
     colorScheme: scheme,
-    fontFamily: 'Rubik',
+    fontFamily: SettingsStore.instance.font,
     scaffoldBackgroundColor: dark ? AppTokens.darkBg : AppTokens.lightBg,
     appBarTheme: AppBarTheme(
       backgroundColor: dark ? AppTokens.darkBg : AppTokens.lightBg,

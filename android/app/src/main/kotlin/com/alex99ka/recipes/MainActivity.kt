@@ -177,6 +177,12 @@ class MainActivity : FlutterFragmentActivity() {
                     }
                     result.success(null)
                 }
+                "cookingMode" -> {
+                    val enabled = call.arguments as? Boolean ?: false
+                    if (enabled) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    else window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    result.success(null)
+                }
                 // A link in the app that owns it, as its own task: url_launcher starts
                 // it in this app's task, so TikTok showed up inside the recipe book too.
                 "openLink" -> try {

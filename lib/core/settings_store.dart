@@ -23,6 +23,9 @@ class SettingsStore extends ChangeNotifier {
   /// Text size on top of the device's own, 1 = as the device has it.
   double textScale = 1;
 
+  /// Rubik, system sans, or system serif; the system font fallback covers all languages.
+  String font = 'Rubik';
+
   Future<void> load() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -33,6 +36,7 @@ class SettingsStore extends ChangeNotifier {
       rotate = prefs.getBool('rotate') ?? true;
       lang = prefs.getString('lang') ?? 'he';
       textScale = prefs.getDouble('textScale') ?? 1;
+      font = prefs.getString('font') ?? 'Rubik';
       _applyLang();
     } catch (_) {}
     _applyRotate();
@@ -60,6 +64,12 @@ class SettingsStore extends ChangeNotifier {
     try {
       await (await SharedPreferences.getInstance()).setDouble('textScale', s);
     } catch (_) {}
+  }
+
+  Future<void> setFont(String value) async {
+    font = value;
+    notifyListeners();
+    try { await (await SharedPreferences.getInstance()).setString('font', value); } catch (_) {}
   }
 
   Future<void> setRotate(bool on) async {

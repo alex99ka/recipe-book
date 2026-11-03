@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/errors.dart';
+import '../core/wake_lock.dart';
 import '../core/tour.dart';
 import '../recipes/api.dart';
 import '../recipes/links.dart';
@@ -42,12 +43,28 @@ class _RecipeScreenState extends State<RecipeScreen> {
   int _factor = 1;
   bool _shopping = false;
   bool _showing = false;
+  bool _cookingMode = false;
   final _comments = GlobalKey<RecipeCommentsState>();
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    if (_cookingMode) setCookingMode(false);
+    super.dispose();
+  }
+
+  Future<void> _toggleCookingMode(bool enabled) async {
+    try {
+      await setCookingMode(enabled);
+      if (mounted) setState(() => _cookingMode = enabled);
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t('לא ניתן להשאיר את המסך ער'))));
+    }
   }
 
   Future<void> _load() async {
@@ -356,6 +373,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
           ];
     return Scaffold(
       appBar: AppBar(title: Text(r?.title ?? widget.title), actions: [
+        if (r != null)
+          IconButton(tooltip: t('מצב בישול'), icon: Icon(_cookingMode ? Icons.light_mode : Icons.light_mode_outlined),
+            onPressed: () => _toggleCookingMode(!_cookingMode)),
         if (r != null)
           IconButton(
               tooltip: t('ייצוא (PDF, טקסט, Markdown)'),

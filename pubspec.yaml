@@ -1,7 +1,7 @@
 name: recipe_book
 description: "ספר מתכונים: the recipe book app, on the make-an-app core."
 publish_to: 'none'
-version: 5.15.0
+version: 5.16.0
 
 environment:
   sdk: ^3.13.3
@@ -16,6 +16,7 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  flutter_svg: ^2.3.2
   google_sign_in: ^7.2.0
   home_widget: ^0.10.0
   http: ^1.6.0

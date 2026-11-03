@@ -22,11 +22,13 @@ import '../recipes/api.dart';
 import '../recipes/links.dart';
 import 'admin_screen.dart';
 import 'export_dialog.dart';
+import 'duplicate_review.dart';
 import 'friends_screen.dart';
 import 'panel_screen.dart';
 import 'pick.dart';
 import 'recipe_widgets.dart';
 import 'skeleton.dart';
+import 'preferences_page.dart';
 import '../core/i18n.dart';
 
 /// The standard set, in this order: updates, sign-in and security, look,
@@ -175,6 +177,14 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       appBar: AppBar(title: Text(t('הגדרות'))),
       body: ListView(children: [
+        _Section(t('העדפות'), icon: Icons.tune),
+        ListTile(
+          leading: const Icon(Icons.tune),
+          title: Text(t('העדפות')),
+          subtitle: Text(t('גופנים, גודל טקסט, שפה וערכת נושא')),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const PreferencesPage())),
+        ),
         if (Api.books.length > 1) ...[
           _Section(t('הספר')),
           ListenableBuilder(
@@ -330,52 +340,6 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
 
         _Section(t('תצוגה')),
-        // In all three at once, so it can be found from any of them.
-        const ListTile(
-          leading: Icon(Icons.translate),
-          title: Text('שפה · Язык · Language'),
-        ),
-        // Each language in its own words, so the way back is readable.
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: SegmentedButton<String>(
-            segments: [
-              for (final e in languages.entries) ButtonSegment(value: e.key, label: Text(e.value)),
-            ],
-            selected: {SettingsStore.instance.lang},
-            onSelectionChanged: (s) => SettingsStore.instance.setLang(s.first),
-          ),
-        ),
-        ListenableBuilder(
-          listenable: SettingsStore.instance,
-          builder: (context, _) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: SegmentedButton<ThemeMode>(
-              segments: [
-                ButtonSegment(value: ThemeMode.system, label: Text(t('כמו במכשיר'))),
-                ButtonSegment(value: ThemeMode.light, label: Text(t('בהיר'))),
-                ButtonSegment(value: ThemeMode.dark, label: Text(t('כהה'))),
-              ],
-              selected: {SettingsStore.instance.themeMode},
-              onSelectionChanged: (s) => SettingsStore.instance.setThemeMode(s.first),
-            ),
-          ),
-        ),
-        ListenableBuilder(
-          listenable: SettingsStore.instance,
-          builder: (context, _) => ListTile(
-            leading: const Icon(Icons.format_size),
-            title: Text(t('גודל הטקסט')),
-            subtitle: Slider(
-              value: SettingsStore.instance.textScale,
-              min: 0.8,
-              max: 1.6,
-              divisions: 8,
-              label: '${(SettingsStore.instance.textScale * 100).round()}%',
-              onChanged: SettingsStore.instance.setTextScale,
-            ),
-          ),
-        ),
         if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
           ListenableBuilder(
             listenable: SettingsStore.instance,
@@ -388,6 +352,12 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         _Section(t('נתונים')),
+        ListTile(
+          leading: const Icon(Icons.content_copy_outlined),
+          title: Text(t('בדיקת מתכונים כפולים')),
+          subtitle: Text(t('בדיקה ובחירה של מתכונים כפולים למחיקה')),
+          onTap: () => reviewDuplicateRecipes(context),
+        ),
         TourTarget(
           'settings.export',
           child: ListTile(
@@ -496,15 +466,16 @@ class _SettingsPageState extends State<SettingsPage> {
 }
 
 class _Section extends StatelessWidget {
-  const _Section(this.title);
+  const _Section(this.title, {this.icon = Icons.settings_outlined});
   final String title;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
-        child: Text(title,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: Theme.of(context).colorScheme.primary)),
+        child: Row(children: [Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 8), Expanded(child: Text(title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Theme.of(context).colorScheme.primary))) ]),
       );
 }
 
