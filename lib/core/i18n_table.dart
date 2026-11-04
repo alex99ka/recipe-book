@@ -24,6 +24,7 @@ const translations = <String, (String, String)>{
   'המתכונים והנתונים': ('Рецепты и данные', 'Recipes and data'),
   'עזרה ותמיכה': ('Помощь и поддержка', 'Help and support'),
   'החשבון שלך': ('Ваш аккаунт', 'Your account'),
+  '{0} הגדרות': ('Настроек: {0}', '{0} settings'),
   'גופנים, גודל טקסט, שפה וערכת נושא': ('Шрифты, размер текста, язык и тема', 'Fonts, text size, language, and theme'),
   'שפה · Язык · Language': ('Язык · שפה · Language', 'Language · שפה · Язык'),
   'ערכת נושא': ('Тема оформления', 'Theme'),

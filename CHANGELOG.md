@@ -9,6 +9,11 @@ Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app, archived).
 
 ## [Unreleased]
 
+## [5.17.1] - 2026-11-04
+
+### Fixed
+- ההגדרות מאורגנות כעת בדפי משנה נפרדים, כמו העדפות. אפשר לחפש הגדרה ולפתוח את החלק שבו היא נמצאת.
+
 ## [5.17.0] - 2026-11-04
 
 ### Added

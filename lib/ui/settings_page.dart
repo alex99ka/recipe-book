@@ -45,18 +45,55 @@ class _SettingsPageState extends State<SettingsPage> {
   bool? _fingerprint;
   Map<String, bool>? _notify;
   final _search = TextEditingController();
+  final _sectionRevision = ValueNotifier<int>(0);
+  List<_SettingsGroup> _latestGroups = const [];
+
+  void _updateSettings(VoidCallback update) {
+    if (!mounted) return;
+    setState(update);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _sectionRevision.value++;
+    });
+  }
 
   List<String> get _settingSearchTerms => [
-        'העדפות', 'שפה', 'ערכת נושא', 'גופן וגודל טקסט', 'הבית והספר', 'שיתוף ומכשירים',
-        'חברים', 'שיתוף האפליקציה', 'המסך במטבח', 'המשימות והקניות', 'הוספת ווידג׳ט למסך הבית',
-        'האפליקציה והעדכונים', 'גרסאות בטא', 'מה חדש בגרסה הזו', 'התראות',
-        'התראות במכשיר הזה', 'כשחבר שולח לי מתכון', 'תגובות על מתכונים',
-        'כשמתכון חדש מוכן בעברית', 'אבטחה ופרטיות', 'כניסה בטביעת אצבע',
-        'מה מגן על הנתונים', 'תצוגה ומכשיר', 'סיבוב אוטומטי למסך רחב',
-        'המתכונים והנתונים', 'בדיקת מתכונים כפולים', 'ייצוא הספר', 'עזרה ותמיכה',
-        'סיור באפליקציה', 'דיווח על בעיה', 'מצב המערכת', 'ניהול משתמשים',
-        'החשבון שלך', 'השם שלי', 'החלפת חשבון', 'יציאה',
-      ].map((term) => t(term)).toSet().toList();
+    'העדפות',
+    'שפה',
+    'ערכת נושא',
+    'גופן וגודל טקסט',
+    'הבית והספר',
+    'שיתוף ומכשירים',
+    'חברים',
+    'שיתוף האפליקציה',
+    'המסך במטבח',
+    'המשימות והקניות',
+    'הוספת ווידג׳ט למסך הבית',
+    'האפליקציה והעדכונים',
+    'גרסאות בטא',
+    'מה חדש בגרסה הזו',
+    'התראות',
+    'התראות במכשיר הזה',
+    'כשחבר שולח לי מתכון',
+    'תגובות על מתכונים',
+    'כשמתכון חדש מוכן בעברית',
+    'אבטחה ופרטיות',
+    'כניסה בטביעת אצבע',
+    'מה מגן על הנתונים',
+    'תצוגה ומכשיר',
+    'סיבוב אוטומטי למסך רחב',
+    'המתכונים והנתונים',
+    'בדיקת מתכונים כפולים',
+    'ייצוא הספר',
+    'עזרה ותמיכה',
+    'סיור באפליקציה',
+    'דיווח על בעיה',
+    'מצב המערכת',
+    'ניהול משתמשים',
+    'החשבון שלך',
+    'השם שלי',
+    'החלפת חשבון',
+    'יציאה',
+  ].map((term) => t(term)).toSet().toList();
 
   int _editDistance(String a, String b) {
     final previous = List<int>.generate(b.length + 1, (i) => i);
@@ -67,7 +104,12 @@ class _SettingsPageState extends State<SettingsPage> {
         final above = previous[j + 1];
         previous[j + 1] = (a.codeUnitAt(i) == b.codeUnitAt(j))
             ? diagonal
-            : 1 + [diagonal, previous[j], above].reduce((x, y) => x < y ? x : y);
+            : 1 +
+                  [
+                    diagonal,
+                    previous[j],
+                    above,
+                  ].reduce((x, y) => x < y ? x : y);
         diagonal = above;
       }
     }
@@ -79,11 +121,13 @@ class _SettingsPageState extends State<SettingsPage> {
     final needle = query.toLowerCase().trim();
     final ranked = [
       for (final term in _settingSearchTerms)
-        for (final word in term.toLowerCase().split(RegExp(r'[^\p{L}\p{N}]+', unicode: true)))
-          if (word.isNotEmpty && (word.length - needle.length).abs() <= needle.length * .55 + 2)
+        for (final word in term.toLowerCase().split(
+          RegExp(r'[^\p{L}\p{N}]+', unicode: true),
+        ))
+          if (word.isNotEmpty &&
+              (word.length - needle.length).abs() <= needle.length * .55 + 2)
             (term, _editDistance(needle, word)),
-    ]
-      ..sort((a, b) => a.$2.compareTo(b.$2));
+    ]..sort((a, b) => a.$2.compareTo(b.$2));
     if (ranked.isEmpty) return null;
     final best = ranked.first;
     final limit = (needle.length * .38).ceil().clamp(2, 5);
@@ -101,6 +145,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void dispose() {
     _search.dispose();
+    _sectionRevision.dispose();
     super.dispose();
   }
 
@@ -118,35 +163,41 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _setNotify(String type, bool on) async {
-    setState(() => _notify = {..._notify!, type: on});
+    _updateSettings(() => _notify = {..._notify!, type: on});
     try {
       final saved = await setNotificationPref(type, on);
-      if (mounted) setState(() => _notify = saved);
+      _updateSettings(() => _notify = saved);
     } catch (e) {
-      if (mounted) setState(() => _notify = {..._notify!, type: !on});
+      _updateSettings(() => _notify = {..._notify!, type: !on});
       showError(_messenger, e, t('השינוי לא נשמר'));
     }
   }
 
   ScaffoldMessengerState get _messenger => ScaffoldMessenger.of(context);
-  void _say(String text) => _messenger.showSnackBar(SnackBar(content: Text(text)));
+  void _say(String text) =>
+      _messenger.showSnackBar(SnackBar(content: Text(text)));
 
   Future<void> _toggleFingerprint(bool on) async {
     if (!on) {
       await disableFingerprint();
-      setState(() => _fingerprint = false);
+      _updateSettings(() => _fingerprint = false);
       return;
     }
     final r = await enableFingerprint();
     if (!mounted) return;
-    setState(() => _fingerprint = r == FingerprintResult.enabled);
-    if (r == FingerprintResult.unsupported) _say(errorText(Errors.noBiometrics));
+    _updateSettings(() => _fingerprint = r == FingerprintResult.enabled);
+    if (r == FingerprintResult.unsupported) {
+      _say(errorText(Errors.noBiometrics));
+    }
   }
 
   /// The site works everywhere; the APK is for Android phones. Where the
   /// system has no share sheet (some browsers), the text is copied instead.
   Future<void> _shareApp() async {
-    final text = t('{0}\nבאתר, בכל טלפון, אייפד או מחשב: {1}\nלהתקנה באנדרואיד: https://github.com/{2}/releases/latest', [AppConfig.name, AppConfig.webUrl, AppConfig.githubRepo]);
+    final text = t(
+      '{0}\nבאתר, בכל טלפון, אייפד או מחשב: {1}\nלהתקנה באנדרואיד: https://github.com/{2}/releases/latest',
+      [AppConfig.name, AppConfig.webUrl, AppConfig.githubRepo],
+    );
     try {
       await SharePlus.instance.share(ShareParams(text: text));
     } catch (_) {
@@ -163,31 +214,49 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, set) => AlertDialog(
           title: Text(t('דיווח על בעיה')),
-          content: Column(mainAxisSize: MainAxisSize.min, children: [
-            TextField(
-              controller: c,
-              autofocus: true,
-              maxLines: 5,
-              decoration: InputDecoration(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: c,
+                autofocus: true,
+                maxLines: 5,
+                decoration: InputDecoration(
                   hintText: t('מה קרה? מה ניסיתם לעשות?'),
                   helperText: t('יישלחו גם הגרסה, המכשיר והשגיאות האחרונות'),
-                  helperMaxLines: 2),
-            ),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: TextButton.icon(
-                icon: Icon(shot == null ? Icons.add_photo_alternate_outlined : Icons.check),
-                label: Text(shot == null ? t('צירוף צילום מסך (לא חובה)') : t('צורף: {0}', [shot!.$2])),
-                onPressed: () async {
-                  final p = await pickPhoto(ctx);
-                  if (p != null) set(() => shot = p);
-                },
+                  helperMaxLines: 2,
+                ),
               ),
-            ),
-          ]),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  icon: Icon(
+                    shot == null
+                        ? Icons.add_photo_alternate_outlined
+                        : Icons.check,
+                  ),
+                  label: Text(
+                    shot == null
+                        ? t('צירוף צילום מסך (לא חובה)')
+                        : t('צורף: {0}', [shot!.$2]),
+                  ),
+                  onPressed: () async {
+                    final p = await pickPhoto(ctx);
+                    if (p != null) set(() => shot = p);
+                  },
+                ),
+              ),
+            ],
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t('ביטול'))),
-            FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: Text(t('שליחה'))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(t('ביטול')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, c.text),
+              child: Text(t('שליחה')),
+            ),
           ],
         ),
       ),
@@ -210,20 +279,27 @@ class _SettingsPageState extends State<SettingsPage> {
     runningTour.value = steps.isNotEmpty
         ? steps
         : [
-            TourStep(t('מה חדש בגרסה {0}', [AppInfo.version]),
-                notes.isEmpty ? t('תיקונים ושיפורים.') : notes),
+            TourStep(
+              t('מה חדש בגרסה {0}', [AppInfo.version]),
+              notes.isEmpty ? t('תיקונים ושיפורים.') : notes,
+            ),
           ];
   }
 
   Future<void> _myName() async {
     final google = FirebaseAuth.instance.currentUser?.displayName ?? '';
-    final name = await askTitle(context, t('השם שלי'),
-        initial: Api.displayName.isEmpty ? google : Api.displayName,
-        ok: t('שמירה'), hint: t('ריק = השם מחשבון Google'), allowEmpty: true);
+    final name = await askTitle(
+      context,
+      t('השם שלי'),
+      initial: Api.displayName.isEmpty ? google : Api.displayName,
+      ok: t('שמירה'),
+      hint: t('ריק = השם מחשבון Google'),
+      allowEmpty: true,
+    );
     if (name == null || !mounted) return;
     try {
       await Api.setDisplayName(name == google ? '' : name);
-      if (mounted) setState(() {});
+      _updateSettings(() {});
     } catch (e) {
       showError(_messenger, e, t('השם לא נשמר'));
     }
@@ -234,374 +310,577 @@ class _SettingsPageState extends State<SettingsPage> {
     final user = FirebaseAuth.instance.currentUser;
     final updater = AppUpdater.instance;
     final settings = <Widget>[
-        _Section(t('העדפות'), icon: Icons.tune),
-        ListTile(
-          leading: const Icon(Icons.tune),
-          title: Text(t('העדפות')),
-          subtitle: Text(t('גופנים, גודל טקסט, שפה וערכת נושא')),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const PreferencesPage())),
+      _Section(
+        t('העדפות'),
+        icon: Icons.tune,
+        searchTerms: ['שפה', 'ערכת נושא', 'גופן וגודל טקסט'],
+      ),
+      ListTile(
+        leading: const Icon(Icons.tune),
+        title: Text(t('העדפות')),
+        subtitle: Text(t('גופנים, גודל טקסט, שפה וערכת נושא')),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute<void>(builder: (_) => const PreferencesPage()),
         ),
-        if (Api.books.length > 1) ...[
-        _Section(t('הבית והספר'), icon: Icons.home_outlined),
-          ListenableBuilder(
-            listenable: RemoteConfig.instance,
-            builder: (context, _) => RadioGroup<String>(
-              groupValue: Api.book,
-              onChanged: (key) async {
-                try {
-                  await Api.setBook(key!);
-                } catch (e) {
-                  showError(_messenger, e, t('החלפת הספר נכשלה'));
-                }
-              },
-              child: Column(children: [
+      ),
+      if (Api.books.length > 1) ...[
+        _Section(
+          t('הבית והספר'),
+          icon: Icons.home_outlined,
+          searchTerms: ['הספר'],
+        ),
+        ListenableBuilder(
+          listenable: RemoteConfig.instance,
+          builder: (context, _) => RadioGroup<String>(
+            groupValue: Api.book,
+            onChanged: (key) async {
+              try {
+                await Api.setBook(key!);
+              } catch (e) {
+                showError(_messenger, e, t('החלפת הספר נכשלה'));
+              }
+            },
+            child: Column(
+              children: [
                 for (final b in Api.books)
-                  RadioListTile<String>(title: Text(Api.label(b.title)), value: b.key),
+                  RadioListTile<String>(
+                    title: Text(Api.label(b.title)),
+                    value: b.key,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+      _Section(
+        t('שיתוף ומכשירים'),
+        icon: Icons.people_outline,
+        searchTerms: [
+          'חברים',
+          'שיתוף האפליקציה',
+          'המסך במטבח',
+          'המשימות והקניות',
+          'הוספת ווידג׳ט למסך הבית',
+        ],
+      ),
+      TourTarget(
+        'settings.friends',
+        child: ListTile(
+          leading: const Icon(Icons.people_outline),
+          title: Text(t('חברים')),
+          subtitle: Text(t('הזמנה בקישור, ושליחת מתכונים זה לזה')),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute<void>(builder: (_) => const FriendsScreen()),
+          ),
+        ),
+      ),
+      ListTile(
+        leading: const Icon(Icons.share_outlined),
+        title: Text(t('שיתוף האפליקציה')),
+        subtitle: Text(
+          t(
+            'קישור לאתר ולהורדה לאנדרואיד. כל אחד נכנס עם Google ומקבל ספר משלו',
+          ),
+        ),
+        onTap: _shareApp,
+      ),
+      TourTarget(
+        'settings.panel',
+        child: ListTile(
+          leading: const Icon(Icons.tablet_outlined),
+          title: Text(t('המסך במטבח')),
+          subtitle: Text(t('סוללה, תצוגה, יומנים וחיבור המסך לספר')),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute<void>(builder: (_) => const PanelScreen()),
+          ),
+        ),
+      ),
+      ListTile(
+        leading: const Icon(Icons.checklist),
+        title: Text(t('המשימות והקניות')),
+        subtitle: Text(t('אותו חשבון ואותו בית')),
+        trailing: const Icon(Icons.open_in_new),
+        // The to-do app takes its own link over when installed; otherwise the web.
+        onTap: () => openLink('https://alex-todo-shopping.web.app'),
+      ),
+      if (homeWidgetsSupported)
+        ListTile(
+          leading: const Icon(Icons.widgets_outlined),
+          title: Text(t('הוספת וידג׳ט למסך הבית')),
+          subtitle: Text(t('המתכונים האחרונים, או כפתור למתכון חדש')),
+          onTap: () => pinHomeWidget(context),
+        ),
+      _Section(
+        t('האפליקציה והעדכונים'),
+        icon: Icons.system_update,
+        searchTerms: ['גרסאות בטא', 'מה חדש בגרסה הזו', 'בדיקת עדכונים'],
+      ),
+      TourTarget(
+        'settings.update',
+        child: ListenableBuilder(
+          listenable: Listenable.merge([updater, WebUpdate.instance]),
+          builder: (context, _) => ListTile(
+            leading: const Icon(Icons.system_update),
+            // Only early users see whether this is a beta.
+            title: Text(
+              t('גרסה {0}{1}', [
+                AppInfo.versionLabel,
+                RemoteConfig.instance.earlyUser && updater?.runningBeta == true
+                    ? t(' · בטא')
+                    : '',
               ]),
             ),
-          ),
-        ],
-        _Section(t('שיתוף ומכשירים'), icon: Icons.people_outline),
-        TourTarget(
-          'settings.friends',
-          child: ListTile(
-            leading: const Icon(Icons.people_outline),
-            title: Text(t('חברים')),
-            subtitle: Text(t('הזמנה בקישור, ושליחת מתכונים זה לזה')),
-            onTap: () => Navigator.push(
-                context, MaterialPageRoute<void>(builder: (_) => const FriendsScreen())),
-          ),
-        ),
-        ListTile(
-          leading: const Icon(Icons.share_outlined),
-          title: Text(t('שיתוף האפליקציה')),
-          subtitle: Text(t('קישור לאתר ולהורדה לאנדרואיד. כל אחד נכנס עם Google ומקבל ספר משלו')),
-          onTap: _shareApp,
-        ),
-        TourTarget(
-          'settings.panel',
-          child: ListTile(
-            leading: const Icon(Icons.tablet_outlined),
-            title: Text(t('המסך במטבח')),
-            subtitle: Text(t('סוללה, תצוגה, יומנים וחיבור המסך לספר')),
-            onTap: () => Navigator.push(
-                context, MaterialPageRoute<void>(builder: (_) => const PanelScreen())),
-          ),
-        ),
-        ListTile(
-          leading: const Icon(Icons.checklist),
-          title: Text(t('המשימות והקניות')),
-          subtitle: Text(t('אותו חשבון ואותו בית')),
-          trailing: const Icon(Icons.open_in_new),
-          // The to-do app takes its own link over when installed; otherwise the web.
-          onTap: () => openLink('https://alex-todo-shopping.web.app'),
-        ),
-        if (homeWidgetsSupported)
-          ListTile(
-            leading: const Icon(Icons.widgets_outlined),
-            title: Text(t('הוספת וידג׳ט למסך הבית')),
-            subtitle: Text(t('המתכונים האחרונים, או כפתור למתכון חדש')),
-            onTap: () => pinHomeWidget(context),
-          ),
-        _Section(t('האפליקציה והעדכונים'), icon: Icons.system_update),
-        TourTarget(
-          'settings.update',
-          child: ListenableBuilder(
-            listenable: Listenable.merge([updater, WebUpdate.instance]),
-            builder: (context, _) => ListTile(
-              leading: const Icon(Icons.system_update),
-              // Only early users see whether this is a beta.
-              title: Text(t('גרסה {0}{1}', [AppInfo.versionLabel, RemoteConfig.instance.earlyUser && updater?.runningBeta == true ? t(' · בטא') : ''])),
-              subtitle: Text(updater == null
+            subtitle: Text(
+              updater == null
                   ? (WebUpdate.instance.available != null
-                      ? t('גרסה {0} זמינה: רענון', [WebUpdate.instance.available])
-                      : t('האתר מתעדכן לבד'))
+                        ? t('גרסה {0} זמינה: רענון', [
+                            WebUpdate.instance.available,
+                          ])
+                        : t('האתר מתעדכן לבד'))
                   : updater.checking
-                      ? t('בודק…')
-                      : updater.progress != null
-                          ? t('מוריד… {0}%', [(updater.progress! * 100).round()])
-                          : updater.error != null
-                              ? errorText(updater.error!)
-                              : updater.available != null
-                                  ? (updater.ready && updater.installsByItself
-                                      ? t('גרסה {0} תותקן לבד כשתצאו', [updater.available!.version])
-                                      : t('גרסה {0} זמינה', [updater.available!.version]))
-                                  : updater.lastResult ?? t('מתעדכן לבד ברקע')),
-              trailing: updater?.available != null
-                  ? FilledButton(onPressed: updater!.install, child: Text(t('עדכון')))
-                  : TextButton(
-                      onPressed: () => updater == null
-                          ? (WebUpdate.instance.available != null
+                  ? t('בודק…')
+                  : updater.progress != null
+                  ? t('מוריד… {0}%', [(updater.progress! * 100).round()])
+                  : updater.error != null
+                  ? errorText(updater.error!)
+                  : updater.available != null
+                  ? (updater.ready && updater.installsByItself
+                        ? t('גרסה {0} תותקן לבד כשתצאו', [
+                            updater.available!.version,
+                          ])
+                        : t('גרסה {0} זמינה', [updater.available!.version]))
+                  : updater.lastResult ?? t('מתעדכן לבד ברקע'),
+            ),
+            trailing: updater?.available != null
+                ? FilledButton(
+                    onPressed: updater!.install,
+                    child: Text(t('עדכון')),
+                  )
+                : TextButton(
+                    onPressed: () => updater == null
+                        ? (WebUpdate.instance.available != null
                               ? WebUpdate.instance.apply()
                               : WebUpdate.instance.check())
-                          : updater.check(),
-                      child: Text(t('בדיקה'))),
-            ),
+                        : updater.check(),
+                    child: Text(t('בדיקה')),
+                  ),
           ),
         ),
-        if (updater != null && RemoteConfig.instance.earlyUser)
-          ListenableBuilder(
-            listenable: SettingsStore.instance,
-            builder: (context, _) => SwitchListTile(
-              secondary: const Icon(Icons.science_outlined),
-              title: Text(t('גרסאות בטא')),
-              subtitle: Text(t('מקבלים כל גרסה ראשונים, לפני שהיא עוברת לכולם. רק אצלך')),
-              value: SettingsStore.instance.beta,
-              onChanged: (on) {
-                SettingsStore.instance.setBeta(on);
-                updater.early = on;
-              },
+      ),
+      if (updater != null && RemoteConfig.instance.earlyUser)
+        ListenableBuilder(
+          listenable: SettingsStore.instance,
+          builder: (context, _) => SwitchListTile(
+            secondary: const Icon(Icons.science_outlined),
+            title: Text(t('גרסאות בטא')),
+            subtitle: Text(
+              t('מקבלים כל גרסה ראשונים, לפני שהיא עוברת לכולם. רק אצלך'),
             ),
-          ),
-        ListTile(
-          leading: const Icon(Icons.new_releases_outlined),
-          title: Text(t('מה חדש בגרסה הזו')),
-          onTap: _whatsNew,
-        ),
-
-        if (pushSupported) ...[
-          _Section(t('התראות'), icon: Icons.notifications_outlined),
-          if (kIsWeb)
-            ListTile(
-              leading: const Icon(Icons.notifications_active_outlined),
-              title: Text(t('התראות במכשיר הזה')),
-              subtitle: Text(t('באייפד: רק מהאפליקציה שבמסך הבית')),
-              onTap: () async => _say(await enableWebNotifications()),
-            ),
-          if (_notify case final n?)
-            for (final e in notificationTypes.entries)
-              SwitchListTile(
-                title: Text(t(e.value)),
-                value: n[e.key] ?? true,
-                onChanged: (v) => _setNotify(e.key, v),
-              ),
-        ],
-
-        _Section(t('אבטחה ופרטיות'), icon: Icons.shield_outlined),
-        if (_fingerprint != null)
-          TourTarget(
-            'settings.fingerprint',
-            child: SwitchListTile(
-              secondary: const Icon(Icons.fingerprint),
-              title: Text(t('כניסה בטביעת אצבע')),
-              subtitle: Text(t('אחרי יציאה, נכנסים שוב בטביעת אצבע במקום Google')),
-              value: _fingerprint!,
-              onChanged: _toggleFingerprint,
-            ),
-          ),
-        ListTile(
-          leading: Icon(Icons.shield_outlined),
-          title: Text(t('מה מגן על הנתונים')),
-          subtitle: Text(t('כל חשבון רואה רק את הספר שלו ושל בני הבית, והשרת בודק כל בקשה. המתכונים נשמרים בשרת בבית ומגובים כל לילה. מומלץ אימות דו-שלבי בחשבון Google.')),
-        ),
-
-        _Section(t('תצוגה ומכשיר'), icon: Icons.display_settings_outlined),
-        if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
-          ListenableBuilder(
-            listenable: SettingsStore.instance,
-            builder: (context, _) => SwitchListTile(
-              secondary: const Icon(Icons.screen_rotation_outlined),
-              title: Text(t('סיבוב אוטומטי למסך רחב')),
-              subtitle: Text(t('כבוי: המסך נשאר לאורך גם כשמסובבים את הטלפון או הטאבלט')),
-              value: SettingsStore.instance.rotate,
-              onChanged: SettingsStore.instance.setRotate,
-            ),
-          ),
-        _Section(t('המתכונים והנתונים'), icon: Icons.storage_outlined),
-        ListTile(
-          leading: const Icon(Icons.content_copy_outlined),
-          title: Text(t('בדיקת מתכונים כפולים')),
-          subtitle: Text(t('בדיקה ובחירה של מתכונים כפולים למחיקה')),
-          onTap: () => reviewDuplicateRecipes(context),
-        ),
-        TourTarget(
-          'settings.export',
-          child: ListTile(
-            leading: const Icon(Icons.download_outlined),
-            title: Text(t('ייצוא הספר')),
-            subtitle: Text(t('כל המתכונים והספרים, כקובץ JSON וקובץ CSV לאקסל')),
-            onTap: () => exportBookFiles(context),
-          ),
-        ),
-        _Section(t('עזרה ותמיכה'), icon: Icons.help_outline),
-        TourTarget(
-          'settings.tour',
-          child: ListTile(
-            leading: const Icon(Icons.school_outlined),
-            title: Text(t('סיור באפליקציה')),
-            subtitle: Text(t('הדרכה אינטראקטיבית בכל מה שיש כאן')),
-            onTap: () {
-              Navigator.pop(context);
-              runningTour.value = fullTour;
+            value: SettingsStore.instance.beta,
+            onChanged: (on) {
+              SettingsStore.instance.setBeta(on);
+              updater.early = on;
             },
           ),
         ),
-        TourTarget(
-          'settings.report',
-          child: ListTile(
-            leading: const Icon(Icons.bug_report_outlined),
-            title: Text(t('דיווח על בעיה')),
-            onTap: _report,
-          ),
-        ),
-        ListTile(
-          leading: const Icon(Icons.monitor_heart_outlined),
-          title: Text(t('מצב המערכת')),
-          onTap: () => Navigator.push(context,
-              MaterialPageRoute<void>(builder: (_) => const DiagnosticsPage())),
-        ),
+      ListTile(
+        leading: const Icon(Icons.new_releases_outlined),
+        title: Text(t('מה חדש בגרסה הזו')),
+        onTap: _whatsNew,
+      ),
 
-        if (Api.isAdmin) ...[
-          _Section(t('ניהול')),
+      if (pushSupported) ...[
+        _Section(
+          t('התראות'),
+          icon: Icons.notifications_outlined,
+          searchTerms: [
+            'התראות במכשיר הזה',
+            'כשחבר שולח לי מתכון',
+            'תגובות על מתכונים',
+            'כשמתכון חדש מוכן בעברית',
+          ],
+        ),
+        if (kIsWeb)
           ListTile(
-            leading: const Icon(Icons.admin_panel_settings_outlined),
-            title: Text(t('ניהול משתמשים')),
-            subtitle: Text(t('מי נכנס, הספרים שלהם, וחסימה')),
-            onTap: () => Navigator.push(
-                context, MaterialPageRoute<void>(builder: (_) => const AdminScreen())),
+            leading: const Icon(Icons.notifications_active_outlined),
+            title: Text(t('התראות במכשיר הזה')),
+            subtitle: Text(t('באייפד: רק מהאפליקציה שבמסך הבית')),
+            onTap: () async => _say(await enableWebNotifications()),
           ),
-        ],
-        _Section(t('החשבון שלך'), icon: Icons.account_circle_outlined),
-        ListTile(
-          leading: const Icon(Icons.badge_outlined),
-          title: Text(t('השם שלי')),
-          subtitle: Text(t('{0} · כך חברים רואים אותך',
-              [Api.displayName.isEmpty ? user?.displayName ?? '' : Api.displayName])),
-          onTap: _myName,
+        if (_notify case final n?)
+          for (final e in notificationTypes.entries)
+            SwitchListTile(
+              title: Text(t(e.value)),
+              value: n[e.key] ?? true,
+              onChanged: (v) => _setNotify(e.key, v),
+            ),
+      ],
+
+      _Section(
+        t('אבטחה ופרטיות'),
+        icon: Icons.shield_outlined,
+        searchTerms: ['כניסה בטביעת אצבע', 'מה מגן על הנתונים'],
+      ),
+      if (_fingerprint != null)
+        TourTarget(
+          'settings.fingerprint',
+          child: SwitchListTile(
+            secondary: const Icon(Icons.fingerprint),
+            title: Text(t('כניסה בטביעת אצבע')),
+            subtitle: Text(
+              t('אחרי יציאה, נכנסים שוב בטביעת אצבע במקום Google'),
+            ),
+            value: _fingerprint!,
+            onChanged: _toggleFingerprint,
+          ),
+        ),
+      ListTile(
+        leading: Icon(Icons.shield_outlined),
+        title: Text(t('מה מגן על הנתונים')),
+        subtitle: Text(
+          t(
+            'כל חשבון רואה רק את הספר שלו ושל בני הבית, והשרת בודק כל בקשה. המתכונים נשמרים בשרת בבית ומגובים כל לילה. מומלץ אימות דו-שלבי בחשבון Google.',
+          ),
+        ),
+      ),
+
+      _Section(
+        t('תצוגה ומכשיר'),
+        icon: Icons.display_settings_outlined,
+        searchTerms: ['סיבוב אוטומטי למסך רחב'],
+      ),
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
+        ListenableBuilder(
+          listenable: SettingsStore.instance,
+          builder: (context, _) => SwitchListTile(
+            secondary: const Icon(Icons.screen_rotation_outlined),
+            title: Text(t('סיבוב אוטומטי למסך רחב')),
+            subtitle: Text(
+              t('כבוי: המסך נשאר לאורך גם כשמסובבים את הטלפון או הטאבלט'),
+            ),
+            value: SettingsStore.instance.rotate,
+            onChanged: SettingsStore.instance.setRotate,
+          ),
+        ),
+      _Section(
+        t('המתכונים והנתונים'),
+        icon: Icons.storage_outlined,
+        searchTerms: ['בדיקת מתכונים כפולים', 'ייצוא הספר'],
+      ),
+      ListTile(
+        leading: const Icon(Icons.content_copy_outlined),
+        title: Text(t('בדיקת מתכונים כפולים')),
+        subtitle: Text(t('בדיקה ובחירה של מתכונים כפולים למחיקה')),
+        onTap: () => reviewDuplicateRecipes(context),
+      ),
+      TourTarget(
+        'settings.export',
+        child: ListTile(
+          leading: const Icon(Icons.download_outlined),
+          title: Text(t('ייצוא הספר')),
+          subtitle: Text(t('כל המתכונים והספרים, כקובץ JSON וקובץ CSV לאקסל')),
+          onTap: () => exportBookFiles(context),
+        ),
+      ),
+      _Section(
+        t('עזרה ותמיכה'),
+        icon: Icons.help_outline,
+        searchTerms: ['סיור באפליקציה', 'דיווח על בעיה', 'מצב המערכת'],
+      ),
+      TourTarget(
+        'settings.tour',
+        child: ListTile(
+          leading: const Icon(Icons.school_outlined),
+          title: Text(t('סיור באפליקציה')),
+          subtitle: Text(t('הדרכה אינטראקטיבית בכל מה שיש כאן')),
+          onTap: () {
+            Navigator.pop(context);
+            runningTour.value = fullTour;
+          },
+        ),
+      ),
+      TourTarget(
+        'settings.report',
+        child: ListTile(
+          leading: const Icon(Icons.bug_report_outlined),
+          title: Text(t('דיווח על בעיה')),
+          onTap: _report,
+        ),
+      ),
+      ListTile(
+        leading: const Icon(Icons.monitor_heart_outlined),
+        title: Text(t('מצב המערכת')),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute<void>(builder: (_) => const DiagnosticsPage()),
+        ),
+      ),
+
+      if (Api.isAdmin) ...[
+        _Section(
+          t('ניהול'),
+          icon: Icons.admin_panel_settings_outlined,
+          searchTerms: ['ניהול משתמשים'],
         ),
         ListTile(
-          leading: const Icon(Icons.account_circle_outlined),
-          title: Text(user?.displayName ?? ''),
-          subtitle: Text([
+          leading: const Icon(Icons.admin_panel_settings_outlined),
+          title: Text(t('ניהול משתמשים')),
+          subtitle: Text(t('מי נכנס, הספרים שלהם, וחסימה')),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute<void>(builder: (_) => const AdminScreen()),
+          ),
+        ),
+      ],
+      _Section(
+        t('החשבון שלך'),
+        icon: Icons.account_circle_outlined,
+        searchTerms: ['השם שלי', 'החלפת חשבון', 'יציאה'],
+      ),
+      ListTile(
+        leading: const Icon(Icons.badge_outlined),
+        title: Text(t('השם שלי')),
+        subtitle: Text(
+          t('{0} · כך חברים רואים אותך', [
+            Api.displayName.isEmpty ? user?.displayName ?? '' : Api.displayName,
+          ]),
+        ),
+        onTap: _myName,
+      ),
+      ListTile(
+        leading: const Icon(Icons.account_circle_outlined),
+        title: Text(user?.displayName ?? ''),
+        subtitle: Text(
+          [
             user?.email ?? '',
-            if (user?.metadata.lastSignInTime case final seen?) t('כניסה אחרונה: {0}', [shortDateTime(seen)]),
-          ].join('\n')),
+            if (user?.metadata.lastSignInTime case final seen?)
+              t('כניסה אחרונה: {0}', [shortDateTime(seen)]),
+          ].join('\n'),
         ),
-        ListTile(
-          leading: const Icon(Icons.switch_account_outlined),
-          title: Text(t('החלפת חשבון')),
-          onTap: () async {
-            Navigator.popUntil(context, (r) => r.isFirst);
-            try {
-              await Auth.switchAccount();
-            } catch (e) {
-              showError(_messenger, e, t('החלפת החשבון נכשלה'));
-            }
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.logout),
-          title: Text(t('יציאה')),
-          onTap: () async {
-            final yes = await showDialog<bool>(
-              context: context,
-              builder: (c) => AlertDialog(
-                title: Text(t('לצאת מהחשבון?')),
-                content: Text(_fingerprint == true
+      ),
+      ListTile(
+        leading: const Icon(Icons.switch_account_outlined),
+        title: Text(t('החלפת חשבון')),
+        onTap: () async {
+          Navigator.popUntil(context, (r) => r.isFirst);
+          try {
+            await Auth.switchAccount();
+          } catch (e) {
+            showError(_messenger, e, t('החלפת החשבון נכשלה'));
+          }
+        },
+      ),
+      ListTile(
+        leading: const Icon(Icons.logout),
+        title: Text(t('יציאה')),
+        onTap: () async {
+          final yes = await showDialog<bool>(
+            context: context,
+            builder: (c) => AlertDialog(
+              title: Text(t('לצאת מהחשבון?')),
+              content: Text(
+                _fingerprint == true
                     ? t('הכניסה הבאה בטביעת אצבע.')
-                    : t('הכניסה הבאה תהיה שוב עם Google.')),
-                actions: [
-                  TextButton(onPressed: () => Navigator.pop(c, false), child: Text(t('ביטול'))),
-                  FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(t('יציאה'))),
-                ],
+                    : t('הכניסה הבאה תהיה שוב עם Google.'),
               ),
-            );
-            if (yes != true || !context.mounted) return;
-            Navigator.popUntil(context, (r) => r.isFirst);
-            if (_fingerprint == true) {
-              await signOutToFingerprint();
-            } else {
-              await Auth.signOut();
-            }
-          },
-        ),
-        const SizedBox(height: 32),
-      ];
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(c, false),
+                  child: Text(t('ביטול')),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(c, true),
+                  child: Text(t('יציאה')),
+                ),
+              ],
+            ),
+          );
+          if (yes != true || !context.mounted) return;
+          Navigator.popUntil(context, (r) => r.isFirst);
+          if (_fingerprint == true) {
+            await signOutToFingerprint();
+          } else {
+            await Auth.signOut();
+          }
+        },
+      ),
+      const SizedBox(height: 32),
+    ];
+    final groups = <_SettingsGroup>[];
+    _Section? currentSection;
+    var currentChildren = <Widget>[];
+    void saveSection() {
+      if (currentSection case final section?) {
+        groups.add(_SettingsGroup(section, currentChildren));
+      }
+      currentChildren = <Widget>[];
+    }
+
+    for (final item in settings) {
+      if (item is _Section) {
+        saveSection();
+        currentSection = item;
+      } else if (currentSection != null) {
+        currentChildren.add(item);
+      }
+    }
+    saveSection();
+    _latestGroups = groups;
     final query = _search.text.trim().toLowerCase();
-    final visibleSettings = query.isEmpty
-        ? settings
-        : settings.where((widget) => widget.toStringDeep().toLowerCase().contains(query)).toList();
+    final visibleGroups = query.isEmpty
+        ? groups
+        : groups.where((group) => group.searchCorpus.contains(query)).toList();
     final suggestions = query.isEmpty
         ? const <String>[]
-        : _settingSearchTerms.where((term) {
-            final candidate = term.toLowerCase();
-            return candidate != query && candidate.contains(query);
-          }).take(5).toList();
-    final didYouMean = visibleSettings.isEmpty ? _didYouMean(query) : null;
+        : _settingSearchTerms
+              .where((term) {
+                final candidate = term.toLowerCase();
+                return candidate != query && candidate.contains(query);
+              })
+              .take(5)
+              .toList();
+    final didYouMean = visibleGroups.isEmpty ? _didYouMean(query) : null;
     return Scaffold(
       appBar: AppBar(title: Text(t('הגדרות'))),
-      body: Column(children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: TextField(
-            controller: _search,
-            onChanged: (_) => setState(() {}),
-            textInputAction: TextInputAction.search,
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.search),
-              hintText: t('חיפוש בהגדרות'),
-              suffixIcon: query.isEmpty ? null : IconButton(
-                tooltip: t('ניקוי החיפוש'),
-                icon: const Icon(Icons.close),
-                onPressed: () { _search.clear(); setState(() {}); },
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: TextField(
+              controller: _search,
+              onChanged: (_) => setState(() {}),
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: t('חיפוש בהגדרות'),
+                suffixIcon: query.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: t('ניקוי החיפוש'),
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          _search.clear();
+                          setState(() {});
+                        },
+                      ),
+                border: const OutlineInputBorder(),
               ),
-              border: const OutlineInputBorder(),
             ),
           ),
-        ),
-        if (suggestions.isNotEmpty)
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsetsDirectional.fromSTEB(16, 2, 16, 8),
-            child: Row(children: [
-              for (final suggestion in suggestions)
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(end: 8),
-                  child: ActionChip(
-                    avatar: const Icon(Icons.search, size: 16),
-                    label: Text(suggestion),
-                    onPressed: () => _completeSearch(suggestion),
-                  ),
-                ),
-            ]),
-          ),
-        Expanded(
-          child: visibleSettings.isEmpty
-              ? Center(
-                  child: didYouMean == null
-                      ? Text(t('לא נמצאו הגדרות'))
-                      : Wrap(
-                          alignment: WrapAlignment.center,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(t('לא נמצאו הגדרות')),
-                            TextButton(
-                              onPressed: () => _completeSearch(didYouMean),
-                              child: Text(t('התכוונתם ל־{0}?', [didYouMean])),
-                            ),
-                          ],
+          if (suggestions.isNotEmpty)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsetsDirectional.fromSTEB(16, 2, 16, 8),
+              child: Row(
+                children: [
+                  for (final suggestion in suggestions)
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(end: 8),
+                      child: ActionChip(
+                        avatar: const Icon(Icons.search, size: 16),
+                        label: Text(suggestion),
+                        onPressed: () => _completeSearch(suggestion),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          Expanded(
+            child: visibleGroups.isEmpty
+                ? Center(
+                    child: didYouMean == null
+                        ? Text(t('לא נמצאו הגדרות'))
+                        : Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Text(t('לא נמצאו הגדרות')),
+                              TextButton(
+                                onPressed: () => _completeSearch(didYouMean),
+                                child: Text(t('התכוונתם ל־{0}?', [didYouMean])),
+                              ),
+                            ],
+                          ),
+                  )
+                : ListView(
+                    children: [
+                      for (final group in visibleGroups)
+                        ListTile(
+                          leading: Icon(group.section.icon),
+                          title: Text(group.section.title),
+                          subtitle: Text(
+                            t('{0} הגדרות', [group.children.length]),
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () {
+                            if (group.section.title == t('העדפות')) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const PreferencesPage(),
+                                ),
+                              );
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute<void>(
+                                  builder: (_) => SettingsSubsectionPage(
+                                    title: group.section.title,
+                                    revision: _sectionRevision,
+                                    childrenBuilder: () => _latestGroups
+                                        .where(
+                                          (latest) =>
+                                              latest.section.title ==
+                                              group.section.title,
+                                        )
+                                        .expand((latest) => latest.children)
+                                        .toList(),
+                                  ),
+                                ),
+                              );
+                            }
+                          },
                         ),
-                )
-              : ListView(children: visibleSettings),
-        ),
-      ]),
+                    ],
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _Section extends StatelessWidget {
-  const _Section(this.title, {this.icon = Icons.settings_outlined});
+  const _Section(
+    this.title, {
+    this.icon = Icons.settings_outlined,
+    this.searchTerms = const [],
+  });
   final String title;
   final IconData icon;
+  final List<String> searchTerms;
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
-        child: Row(children: [Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 8), Expanded(child: Text(title,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Theme.of(context).colorScheme.primary))) ]),
-      );
+    padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
+    child: Row(
+      children: [
+        Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.titleSmall
+                ?.copyWith(color: Theme.of(context).colorScheme.primary),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class DiagnosticsPage extends StatefulWidget {
@@ -628,23 +907,61 @@ class _DiagnosticsPageState extends State<DiagnosticsPage> {
           future: _checks,
           builder: (context, snap) => !snap.hasData
               ? const SkeletonList(rows: 5)
-              : ListView(children: [
-                  for (final check in snap.data!)
-                    ListTile(
-                      leading: Icon(
-                        check.ok == null
-                            ? Icons.info_outline
-                            : check.ok!
-                                ? Icons.check_circle_outline
-                                : Icons.error_outline,
-                        color: check.ok == false ? c.error : c.primary,
+              : ListView(
+                  children: [
+                    for (final check in snap.data!)
+                      ListTile(
+                        leading: Icon(
+                          check.ok == null
+                              ? Icons.info_outline
+                              : check.ok!
+                              ? Icons.check_circle_outline
+                              : Icons.error_outline,
+                          color: check.ok == false ? c.error : c.primary,
+                        ),
+                        title: Text(check.label),
+                        subtitle: Text(check.value),
                       ),
-                      title: Text(check.label),
-                      subtitle: Text(check.value),
-                    ),
-                ]),
+                  ],
+                ),
         ),
       ),
     );
   }
+}
+
+class _SettingsGroup {
+  _SettingsGroup(this.section, this.children);
+
+  final _Section section;
+  final List<Widget> children;
+
+  String get searchCorpus => [
+    section.title,
+    ...section.searchTerms.map((term) => t(term)),
+    ...children.map((widget) => widget.toStringDeep()),
+  ].join(' ').toLowerCase();
+}
+
+class SettingsSubsectionPage extends StatelessWidget {
+  const SettingsSubsectionPage({
+    super.key,
+    required this.title,
+    required this.revision,
+    required this.childrenBuilder,
+  });
+
+  final String title;
+  final ValueListenable<int> revision;
+  final List<Widget> Function() childrenBuilder;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: Text(title)),
+    body: ValueListenableBuilder<int>(
+      valueListenable: revision,
+      builder: (context, revisionValue, _) =>
+          ListView(children: childrenBuilder()),
+    ),
+  );
 }
