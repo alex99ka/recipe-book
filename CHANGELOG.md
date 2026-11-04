@@ -9,6 +9,12 @@ Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app, archived).
 
 ## [Unreleased]
 
+## [5.17.0] - 2026-11-04
+
+### Added
+- ארגון מחדש של ההגדרות, עם חיפוש, השלמה אוטומטית והצעת תיקון לשמות שחיפשו.
+- בחירת Noto Sans ו-Noto Serif לצד Rubik וגופן המערכת, עם תמיכה בעברית, רוסית ואנגלית.
+
 ## [5.16.0] - 2026-11-03
 
 ### Added

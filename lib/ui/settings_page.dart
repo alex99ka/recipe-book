@@ -44,6 +44,65 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   bool? _fingerprint;
   Map<String, bool>? _notify;
+  final _search = TextEditingController();
+
+  List<String> get _settingSearchTerms => [
+        'העדפות', 'שפה', 'ערכת נושא', 'גופן וגודל טקסט', 'הבית והספר', 'שיתוף ומכשירים',
+        'חברים', 'שיתוף האפליקציה', 'המסך במטבח', 'המשימות והקניות', 'הוספת ווידג׳ט למסך הבית',
+        'האפליקציה והעדכונים', 'גרסאות בטא', 'מה חדש בגרסה הזו', 'התראות',
+        'התראות במכשיר הזה', 'כשחבר שולח לי מתכון', 'תגובות על מתכונים',
+        'כשמתכון חדש מוכן בעברית', 'אבטחה ופרטיות', 'כניסה בטביעת אצבע',
+        'מה מגן על הנתונים', 'תצוגה ומכשיר', 'סיבוב אוטומטי למסך רחב',
+        'המתכונים והנתונים', 'בדיקת מתכונים כפולים', 'ייצוא הספר', 'עזרה ותמיכה',
+        'סיור באפליקציה', 'דיווח על בעיה', 'מצב המערכת', 'ניהול משתמשים',
+        'החשבון שלך', 'השם שלי', 'החלפת חשבון', 'יציאה',
+      ].map((term) => t(term)).toSet().toList();
+
+  int _editDistance(String a, String b) {
+    final previous = List<int>.generate(b.length + 1, (i) => i);
+    for (var i = 0; i < a.length; i++) {
+      var diagonal = previous[0];
+      previous[0] = i + 1;
+      for (var j = 0; j < b.length; j++) {
+        final above = previous[j + 1];
+        previous[j + 1] = (a.codeUnitAt(i) == b.codeUnitAt(j))
+            ? diagonal
+            : 1 + [diagonal, previous[j], above].reduce((x, y) => x < y ? x : y);
+        diagonal = above;
+      }
+    }
+    return previous[b.length];
+  }
+
+  String? _didYouMean(String query) {
+    if (query.length < 3) return null;
+    final needle = query.toLowerCase().trim();
+    final ranked = [
+      for (final term in _settingSearchTerms)
+        for (final word in term.toLowerCase().split(RegExp(r'[^\p{L}\p{N}]+', unicode: true)))
+          if (word.isNotEmpty && (word.length - needle.length).abs() <= needle.length * .55 + 2)
+            (term, _editDistance(needle, word)),
+    ]
+      ..sort((a, b) => a.$2.compareTo(b.$2));
+    if (ranked.isEmpty) return null;
+    final best = ranked.first;
+    final limit = (needle.length * .38).ceil().clamp(2, 5);
+    return best.$2 <= limit && best.$1.toLowerCase() != needle ? best.$1 : null;
+  }
+
+  void _completeSearch(String value) {
+    _search.value = TextEditingValue(
+      text: value,
+      selection: TextSelection.collapsed(offset: value.length),
+    );
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -174,9 +233,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final updater = AppUpdater.instance;
-    return Scaffold(
-      appBar: AppBar(title: Text(t('הגדרות'))),
-      body: ListView(children: [
+    final settings = <Widget>[
         _Section(t('העדפות'), icon: Icons.tune),
         ListTile(
           leading: const Icon(Icons.tune),
@@ -186,7 +243,7 @@ class _SettingsPageState extends State<SettingsPage> {
           onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const PreferencesPage())),
         ),
         if (Api.books.length > 1) ...[
-          _Section(t('הספר')),
+        _Section(t('הבית והספר'), icon: Icons.home_outlined),
           ListenableBuilder(
             listenable: RemoteConfig.instance,
             builder: (context, _) => RadioGroup<String>(
@@ -205,7 +262,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         ],
-        _Section(t('שיתוף')),
+        _Section(t('שיתוף ומכשירים'), icon: Icons.people_outline),
         TourTarget(
           'settings.friends',
           child: ListTile(
@@ -247,7 +304,7 @@ class _SettingsPageState extends State<SettingsPage> {
             subtitle: Text(t('המתכונים האחרונים, או כפתור למתכון חדש')),
             onTap: () => pinHomeWidget(context),
           ),
-        _Section(t('עדכונים')),
+        _Section(t('האפליקציה והעדכונים'), icon: Icons.system_update),
         TourTarget(
           'settings.update',
           child: ListenableBuilder(
@@ -304,7 +361,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
 
         if (pushSupported) ...[
-          _Section(t('התראות')),
+          _Section(t('התראות'), icon: Icons.notifications_outlined),
           if (kIsWeb)
             ListTile(
               leading: const Icon(Icons.notifications_active_outlined),
@@ -321,7 +378,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
         ],
 
-        _Section(t('כניסה ואבטחה')),
+        _Section(t('אבטחה ופרטיות'), icon: Icons.shield_outlined),
         if (_fingerprint != null)
           TourTarget(
             'settings.fingerprint',
@@ -339,7 +396,7 @@ class _SettingsPageState extends State<SettingsPage> {
           subtitle: Text(t('כל חשבון רואה רק את הספר שלו ושל בני הבית, והשרת בודק כל בקשה. המתכונים נשמרים בשרת בבית ומגובים כל לילה. מומלץ אימות דו-שלבי בחשבון Google.')),
         ),
 
-        _Section(t('תצוגה')),
+        _Section(t('תצוגה ומכשיר'), icon: Icons.display_settings_outlined),
         if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
           ListenableBuilder(
             listenable: SettingsStore.instance,
@@ -351,7 +408,7 @@ class _SettingsPageState extends State<SettingsPage> {
               onChanged: SettingsStore.instance.setRotate,
             ),
           ),
-        _Section(t('נתונים')),
+        _Section(t('המתכונים והנתונים'), icon: Icons.storage_outlined),
         ListTile(
           leading: const Icon(Icons.content_copy_outlined),
           title: Text(t('בדיקת מתכונים כפולים')),
@@ -367,7 +424,7 @@ class _SettingsPageState extends State<SettingsPage> {
             onTap: () => exportBookFiles(context),
           ),
         ),
-        _Section(t('עזרה')),
+        _Section(t('עזרה ותמיכה'), icon: Icons.help_outline),
         TourTarget(
           'settings.tour',
           child: ListTile(
@@ -405,7 +462,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 context, MaterialPageRoute<void>(builder: (_) => const AdminScreen())),
           ),
         ],
-        _Section(t('חשבון')),
+        _Section(t('החשבון שלך'), icon: Icons.account_circle_outlined),
         ListTile(
           leading: const Icon(Icons.badge_outlined),
           title: Text(t('השם שלי')),
@@ -460,6 +517,74 @@ class _SettingsPageState extends State<SettingsPage> {
           },
         ),
         const SizedBox(height: 32),
+      ];
+    final query = _search.text.trim().toLowerCase();
+    final visibleSettings = query.isEmpty
+        ? settings
+        : settings.where((widget) => widget.toStringDeep().toLowerCase().contains(query)).toList();
+    final suggestions = query.isEmpty
+        ? const <String>[]
+        : _settingSearchTerms.where((term) {
+            final candidate = term.toLowerCase();
+            return candidate != query && candidate.contains(query);
+          }).take(5).toList();
+    final didYouMean = visibleSettings.isEmpty ? _didYouMean(query) : null;
+    return Scaffold(
+      appBar: AppBar(title: Text(t('הגדרות'))),
+      body: Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          child: TextField(
+            controller: _search,
+            onChanged: (_) => setState(() {}),
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search),
+              hintText: t('חיפוש בהגדרות'),
+              suffixIcon: query.isEmpty ? null : IconButton(
+                tooltip: t('ניקוי החיפוש'),
+                icon: const Icon(Icons.close),
+                onPressed: () { _search.clear(); setState(() {}); },
+              ),
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        ),
+        if (suggestions.isNotEmpty)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 2, 16, 8),
+            child: Row(children: [
+              for (final suggestion in suggestions)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 8),
+                  child: ActionChip(
+                    avatar: const Icon(Icons.search, size: 16),
+                    label: Text(suggestion),
+                    onPressed: () => _completeSearch(suggestion),
+                  ),
+                ),
+            ]),
+          ),
+        Expanded(
+          child: visibleSettings.isEmpty
+              ? Center(
+                  child: didYouMean == null
+                      ? Text(t('לא נמצאו הגדרות'))
+                      : Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(t('לא נמצאו הגדרות')),
+                            TextButton(
+                              onPressed: () => _completeSearch(didYouMean),
+                              child: Text(t('התכוונתם ל־{0}?', [didYouMean])),
+                            ),
+                          ],
+                        ),
+                )
+              : ListView(children: visibleSettings),
+        ),
       ]),
     );
   }

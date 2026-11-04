@@ -50,8 +50,16 @@ class PreferencesPage extends StatelessWidget {
                 initialValue: store.font,
                 decoration: InputDecoration(labelText: t('גופן'), border: const OutlineInputBorder()),
                 items: [
-                  for (final pair in [('Rubik', 'Rubik'), ('sans-serif', 'Sans serif'), ('serif', 'Serif')])
-                    DropdownMenuItem(value: pair.$1, child: Text(pair.$2, style: TextStyle(fontFamily: pair.$1))),
+                  for (final pair in [
+                    ('Rubik', 'Rubik'),
+                    ('NotoSans', 'Noto Sans'),
+                    ('NotoSerif', 'Noto Serif'),
+                    ('sans-serif', 'System'),
+                  ])
+                    DropdownMenuItem(
+                      value: pair.$1,
+                      child: Text(pair.$2, style: TextStyle(fontFamily: pair.$1 == 'sans-serif' ? null : pair.$1)),
+                    ),
                 ],
                 onChanged: (v) { if (v != null) store.setFont(v); },
               ),

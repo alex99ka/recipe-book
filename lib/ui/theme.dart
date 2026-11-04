@@ -49,6 +49,11 @@ ThemeData appTheme(Brightness brightness) {
   return ThemeData(
     colorScheme: scheme,
     fontFamily: SettingsStore.instance.font,
+    fontFamilyFallback: switch (SettingsStore.instance.font) {
+      'NotoSans' => const ['NotoSansHebrew', 'Rubik', 'NotoSerifHebrew'],
+      'NotoSerif' => const ['NotoSerifHebrew', 'Rubik', 'NotoSansHebrew'],
+      _ => const ['NotoSans', 'NotoSansHebrew', 'NotoSerif', 'NotoSerifHebrew'],
+    },
     scaffoldBackgroundColor: dark ? AppTokens.darkBg : AppTokens.lightBg,
     appBarTheme: AppBarTheme(
       backgroundColor: dark ? AppTokens.darkBg : AppTokens.lightBg,

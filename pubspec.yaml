@@ -1,7 +1,7 @@
 name: recipe_book
 description: "ספר מתכונים: the recipe book app, on the make-an-app core."
 publish_to: 'none'
-version: 5.16.0
+version: 5.17.0
 
 environment:
   sdk: ^3.13.3
@@ -46,6 +46,20 @@ flutter:
     - family: Rubik
       fonts:
         - asset: assets/fonts/Rubik.ttf
+    # Noto Sans supplies Latin and Cyrillic; the Hebrew companion fills its
+    # script gap. Same pairing for Noto Serif. Both font families are OFL.
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans.ttf
+    - family: NotoSansHebrew
+      fonts:
+        - asset: assets/fonts/NotoSansHebrew.ttf
+    - family: NotoSerif
+      fonts:
+        - asset: assets/fonts/NotoSerif.ttf
+    - family: NotoSerifHebrew
+      fonts:
+        - asset: assets/fonts/NotoSerifHebrew.ttf
 
 # The Ionic app's book-and-steam art; its orange background repainted in the
 # brand light brown (icon.png), and the book alone for the adaptive icon.
