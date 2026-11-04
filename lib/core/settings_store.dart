@@ -23,7 +23,7 @@ class SettingsStore extends ChangeNotifier {
   /// Text size on top of the device's own, 1 = as the device has it.
   double textScale = 1;
 
-  /// Rubik, system sans, or system serif; the system font fallback covers all languages.
+  /// Selected bundled typeface; Noto companions fill any missing script glyphs.
   String font = 'Rubik';
 
   Future<void> load() async {
@@ -37,6 +37,7 @@ class SettingsStore extends ChangeNotifier {
       lang = prefs.getString('lang') ?? 'he';
       textScale = prefs.getDouble('textScale') ?? 1;
       font = prefs.getString('font') ?? 'Rubik';
+      if (!fontKeysFor(lang).contains(font)) font = defaultFontFor(lang);
       _applyLang();
     } catch (_) {}
     _applyRotate();
@@ -51,6 +52,7 @@ class SettingsStore extends ChangeNotifier {
 
   Future<void> setLang(String code) async {
     lang = code;
+    if (!fontKeysFor(code).contains(font)) font = defaultFontFor(code);
     _applyLang();
     notifyListeners();
     try {
@@ -97,3 +99,15 @@ class SettingsStore extends ChangeNotifier {
     } catch (_) {}
   }
 }
+
+const _hebrewFontKeys = [
+  'Rubik', 'NotoSans', 'NotoSerif', 'Heebo', 'Assistant', 'Alef',
+  'FrankRuhlLibre', 'DavidLibre', 'SecularOne', 'OpenSans',
+];
+const _latinCyrillicFontKeys = [
+  'Roboto', 'OpenSans', 'Rubik', 'Montserrat', 'NotoSans', 'Inter',
+  'SourceSans3', 'Merriweather', 'PlayfairDisplay', 'NotoSerif',
+];
+List<String> fontKeysFor(String language) =>
+    language == 'he' ? _hebrewFontKeys : _latinCyrillicFontKeys;
+String defaultFontFor(String language) => fontKeysFor(language).first;

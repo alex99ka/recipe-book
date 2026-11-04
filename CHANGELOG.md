@@ -9,6 +9,11 @@ Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app, archived).
 
 ## [Unreleased]
 
+## [5.17.2] - 2026-11-04
+
+### Added
+- בחירה בין עשרה גופנים לכל שפה, עם גופנים מותאמים לעברית ולרוסית ולאנגלית.
+
 ## [5.17.1] - 2026-11-04
 
 ### Fixed

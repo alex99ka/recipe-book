@@ -1,7 +1,7 @@
 name: recipe_book
 description: "ספר מתכונים: the recipe book app, on the make-an-app core."
 publish_to: 'none'
-version: 5.17.1
+version: 5.17.2
 
 environment:
   sdk: ^3.13.3
@@ -40,6 +40,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/fonts/licenses/
   fonts:
     # Hebrew sans, bundled (works offline, no runtime font fetch). OFL:
     # assets/fonts/Rubik-OFL.txt.
@@ -60,6 +62,45 @@ flutter:
     - family: NotoSerifHebrew
       fonts:
         - asset: assets/fonts/NotoSerifHebrew.ttf
+    - family: Heebo
+      fonts:
+        - asset: assets/fonts/Heebo.ttf
+    - family: Assistant
+      fonts:
+        - asset: assets/fonts/Assistant.ttf
+    - family: Alef
+      fonts:
+        - asset: assets/fonts/Alef.ttf
+    - family: FrankRuhlLibre
+      fonts:
+        - asset: assets/fonts/FrankRuhlLibre.ttf
+    - family: DavidLibre
+      fonts:
+        - asset: assets/fonts/DavidLibre.ttf
+    - family: SecularOne
+      fonts:
+        - asset: assets/fonts/SecularOne.ttf
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto.ttf
+    - family: OpenSans
+      fonts:
+        - asset: assets/fonts/OpenSans.ttf
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat.ttf
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter.ttf
+    - family: SourceSans3
+      fonts:
+        - asset: assets/fonts/SourceSans3.ttf
+    - family: Merriweather
+      fonts:
+        - asset: assets/fonts/Merriweather.ttf
+    - family: PlayfairDisplay
+      fonts:
+        - asset: assets/fonts/PlayfairDisplay.ttf
 
 # The Ionic app's book-and-steam art; its orange background repainted in the
 # brand light brown (icon.png), and the book alone for the adaptive icon.

@@ -49,11 +49,11 @@ ThemeData appTheme(Brightness brightness) {
   return ThemeData(
     colorScheme: scheme,
     fontFamily: SettingsStore.instance.font,
-    fontFamilyFallback: switch (SettingsStore.instance.font) {
-      'NotoSans' => const ['NotoSansHebrew', 'Rubik', 'NotoSerifHebrew'],
-      'NotoSerif' => const ['NotoSerifHebrew', 'Rubik', 'NotoSansHebrew'],
-      _ => const ['NotoSans', 'NotoSansHebrew', 'NotoSerif', 'NotoSerifHebrew'],
-    },
+    // Most families cover only one script; these bundled companions fill
+    // Hebrew and Cyrillic gaps while keeping the selected face where present.
+    fontFamilyFallback: const [
+      'NotoSansHebrew', 'NotoSans', 'NotoSerifHebrew', 'NotoSerif', 'Rubik',
+    ],
     scaffoldBackgroundColor: dark ? AppTokens.darkBg : AppTokens.lightBg,
     appBarTheme: AppBarTheme(
       backgroundColor: dark ? AppTokens.darkBg : AppTokens.lightBg,

@@ -4,6 +4,16 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../core/i18n.dart';
 import '../core/settings_store.dart';
 
+const _fontLabels = {
+  'Rubik': 'Rubik', 'NotoSans': 'Noto Sans', 'NotoSerif': 'Noto Serif',
+  'Heebo': 'Heebo', 'Assistant': 'Assistant', 'Alef': 'Alef',
+  'FrankRuhlLibre': 'Frank Ruhl Libre', 'DavidLibre': 'David Libre',
+  'SecularOne': 'Secular One', 'Roboto': 'Roboto', 'OpenSans': 'Open Sans',
+  'Montserrat': 'Montserrat', 'Inter': 'Inter',
+  'SourceSans3': 'Source Sans 3', 'Merriweather': 'Merriweather',
+  'PlayfairDisplay': 'Playfair Display',
+};
+
 class PreferencesPage extends StatelessWidget {
   const PreferencesPage({super.key});
 
@@ -50,15 +60,10 @@ class PreferencesPage extends StatelessWidget {
                 initialValue: store.font,
                 decoration: InputDecoration(labelText: t('גופן'), border: const OutlineInputBorder()),
                 items: [
-                  for (final pair in [
-                    ('Rubik', 'Rubik'),
-                    ('NotoSans', 'Noto Sans'),
-                    ('NotoSerif', 'Noto Serif'),
-                    ('sans-serif', 'System'),
-                  ])
+                  for (final key in fontKeysFor(store.lang))
                     DropdownMenuItem(
-                      value: pair.$1,
-                      child: Text(pair.$2, style: TextStyle(fontFamily: pair.$1 == 'sans-serif' ? null : pair.$1)),
+                      value: key,
+                      child: Text(_fontLabels[key]!, style: TextStyle(fontFamily: key)),
                     ),
                 ],
                 onChanged: (v) { if (v != null) store.setFont(v); },
