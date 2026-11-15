@@ -7,7 +7,7 @@ import 'pick.dart';
 import 'recipe_widgets.dart';
 import '../core/i18n.dart';
 
-/// Name, photo, tags, categories, source link and ingredient prices; and
+/// Name, photo, ingredients, steps, tags, categories, source link and ingredient prices; and
 /// deleting the recipe. Pops true when something was saved, 'deleted' when gone.
 class EditRecipeScreen extends StatefulWidget {
   const EditRecipeScreen(this.recipe, {super.key});
@@ -23,6 +23,9 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   late final _tags = TextEditingController(text: r.tags.join(', '));
   late final _categories = TextEditingController(text: r.categories.join(', '));
   late final _source = TextEditingController(text: r.sourceUrl);
+  // One ingredient per line; steps apart by a blank line, since a step may run over several lines.
+  late final _ingredients = TextEditingController(text: r.sourceIngredients.join('\n'));
+  late final _steps = TextEditingController(text: r.sourceSteps.join('\n\n'));
   late final _prices = [
     for (final p in r.prices) TextEditingController(text: p.price == null ? '' : pretty1(p.price!)),
   ];
@@ -33,7 +36,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
 
   @override
   void dispose() {
-    for (final c in [_name, _tags, _categories, _source, ..._prices]) {
+    for (final c in [_name, _tags, _categories, _source, _ingredients, _steps, ..._prices]) {
       c.dispose();
     }
     super.dispose();
@@ -43,6 +46,12 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
 
   static List<String> _list(String s) =>
       [for (final x in s.split(',')) if (x.trim().isNotEmpty) x.trim()];
+
+  static List<String> _lines(String s, Pattern by) =>
+      [for (final x in s.split(by)) if (x.trim().isNotEmpty) x.trim()];
+
+  static bool _same(List<String> a, List<String> b) =>
+      a.length == b.length && [for (final (i, x) in a.indexed) x == b[i]].every((x) => x);
 
   /// The photo is saved at once: it doesn't wait for "save".
   Future<void> _photo() async {
@@ -61,11 +70,15 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
 
   Future<void> _save() async {
     final name = _name.text.trim();
+    final ingredients = _lines(_ingredients.text, '\n');
+    final steps = _lines(_steps.text, RegExp(r'\n\s*\n'));
     final patch = <String, Object>{
       if (name.isNotEmpty && name != r.name) 'name': name,
       if (_list(_tags.text).join() != r.tags.join()) 'tags': _list(_tags.text),
       if (_list(_categories.text).join() != r.categories.join()) 'categories': _list(_categories.text),
       if (_source.text.trim() != r.sourceUrl) 'sourceUrl': _source.text.trim(),
+      if (!_same(ingredients, r.sourceIngredients)) 'ingredients': ingredients,
+      if (!_same(steps, r.sourceSteps)) 'steps': steps,
     };
     final pricesChanged = [
       for (final (i, p) in r.prices.indexed)
@@ -149,6 +162,20 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(children: [
               TextField(controller: _name, decoration: InputDecoration(labelText: t('שם (בשפת המקור)'))),
+              TextField(
+                controller: _ingredients,
+                minLines: 3,
+                maxLines: null,
+                decoration: InputDecoration(
+                    labelText: t('מצרכים (בשפת המקור)'), helperText: t('מצרך בכל שורה')),
+              ),
+              TextField(
+                controller: _steps,
+                minLines: 3,
+                maxLines: null,
+                decoration: InputDecoration(
+                    labelText: t('אופן ההכנה (בשפת המקור)'), helperText: t('שורה ריקה בין שלב לשלב')),
+              ),
               TextField(controller: _tags, decoration: InputDecoration(labelText: t('תגיות, מופרדות בפסיק'))),
               TextField(
                   controller: _categories,

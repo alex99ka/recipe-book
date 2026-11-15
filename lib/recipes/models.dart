@@ -63,6 +63,10 @@ extension type Recipe(Map<String, dynamic> j) implements Summary {
   String get servings => j['servings'] as String? ?? '';
   String get totalTime => j['totalTime'] as String? ?? '';
   String get sourceUrl => j['sourceUrl'] as String? ?? '';
+
+  /// The lines as stored, in the source language: what the edit screen changes.
+  List<String> get sourceIngredients => _strings(j['sourceIngredients']);
+  List<String> get sourceSteps => _strings(j['sourceSteps']);
   List<String> get allTags => [..._strings(j['categories']), ..._strings(j['tags'])];
 
   /// The ingredient lines as the server shows them, each with its price.

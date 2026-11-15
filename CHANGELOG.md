@@ -9,6 +9,14 @@ Versions before 5.0.0 are the Ionic app (alex99ka/recipe-book-app, archived).
 
 ## [Unreleased]
 
+## [5.18.0] - 2026-11-15
+
+### Added
+- בעריכת מתכון אפשר לשנות גם את המצרכים ואת אופן ההכנה.
+
+### Fixed
+- ייבוא מתכונים מטיקטוק עובד שוב.
+
 ## [5.17.3] - 2026-11-07
 
 ### Changed
